@@ -34,7 +34,7 @@ const simplex = [
 // This method is a *lot* faster than using (int)Math.floor(x)
 function fastfloor(x) {
 	//return x>0 ? x : x-1;
-	return Math.floor(x)
+	return Math.floor(x);
 }
 function dot_simplex_2d(g, x, y) {
 	return g[0]*x + g[1]*y;
@@ -207,7 +207,7 @@ function noise_simplex_3d(xin, yin, zin) {
 
 	var gi3 = perm[ii+1+perm[jj+1+perm[kk+1]]] % 12;
 	// Calculate the contribution from the four corners
-	var t0 = 0.5 - x0*x0 - y0*y0 - z0*z0;
+	var t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
 
 	if(t0<0) n0 = 0.0;
 

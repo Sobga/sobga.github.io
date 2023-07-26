@@ -81,6 +81,6 @@ class SimplexSampler extends Sampler{
     }
 
     sample_1d(x){
-        return noise_simplex_2d(x, this.seed);
+        return 1.5*noise_simplex_2d(x, this.seed);
     }
 }

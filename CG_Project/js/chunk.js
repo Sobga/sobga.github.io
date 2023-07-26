@@ -2,14 +2,14 @@ const CHUNK_SIZE = 16;
 const CHUNK_HALF = CHUNK_SIZE/2;
 
 const CHUNK_VERTS = [
-    vec4(0, 0, 1, 1.0),
-    vec4(0, 1, 1, 1.0),
-    vec4(1, 1, 1, 1.0),
-    vec4(1, 0, 1, 1.0),
-    vec4(0, 0, 0, 1.0),
-    vec4(0, 1, 0, 1.0),
-    vec4(1, 1, 0, 1.0),
-    vec4(1, 0, 0, 1.0)
+    vec4(0, 0, 1, 1),
+    vec4(0, 1, 1, 1),
+    vec4(1, 1, 1, 1),
+    vec4(1, 0, 1, 1),
+    vec4(0, 0, 0, 1),
+    vec4(0, 1, 0, 1),
+    vec4(1, 1, 0, 1),
+    vec4(1, 0, 0, 1)
 ]
 
 function init_3d_array(dim){
@@ -25,8 +25,9 @@ function init_3d_array(dim){
     }
     return array;
 }
+
 function get_chunk_positions(render_distance, offset){
-    // Computes the number of chunks inside the render distance
+    // Computes the chunks inside the render distance
     const positions = []
     const r_sq = render_distance * render_distance;
     for (var x = -render_distance; x <= render_distance; x++){
@@ -54,7 +55,10 @@ class ChunkEntry{
 
     generate_vertices(levels){
         var vertices = [];
-        const offset = vec3(this.pos[0] * CHUNK_SIZE, this.pos[1] * CHUNK_SIZE, this.pos[2] * CHUNK_SIZE);
+
+        const offset_x = -CHUNK_HALF + this.pos[0] * CHUNK_SIZE;
+        const offset_y = -CHUNK_HALF + this.pos[1] * CHUNK_SIZE;
+        const offset_z = -CHUNK_HALF + this.pos[2] * CHUNK_SIZE;
 
         const cube_points = [];
         const cube_levels = [];
@@ -64,17 +68,18 @@ class ChunkEntry{
         }
 
         for (var i = 0; i < CHUNK_SIZE; i++){
-            const x = i - CHUNK_HALF + offset[0];
+            const x = i + offset_x;
 
             for (var j = 0; j < CHUNK_SIZE; j++){
-                const y = j - CHUNK_HALF + offset[1];
+                const y = j + offset_y;
 
                 for (var k = 0; k < CHUNK_SIZE; k++){
-                    const z = k - CHUNK_HALF + offset[2];
-
+                    const z = k + offset_z;
                 
+                    // Fetch computed levels
                     for (var m = 0; m < CHUNK_VERTS.length; m++){
                         const cube_offset = CHUNK_VERTS[m];
+                    
                         cube_points[m][0] = x + cube_offset[0];
                         cube_points[m][1] = y + cube_offset[1];
                         cube_points[m][2] = z + cube_offset[2];
@@ -219,15 +224,19 @@ class ChunkGenerator extends Model{
     }
 
     generate_chunk_data(chunk){
+        const offset_x = -CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE;
+        const offset_y = -CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
+        const offset_z = -CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
+
         // Sample levels for chunk
         for (var i = 0; i < CHUNK_SIZE + 1; i++){
-            const x = i - CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE; 
+            const x = i + offset_x; 
 
             for (var j = 0; j < CHUNK_SIZE + 1; j++){
-                const y = j - CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
+                const y = j + offset_y;
 
                 for (var k = 0; k < CHUNK_SIZE + 1; k++){
-                    const z = k - CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
+                    const z = k + offset_z;
                     this.chunk_levels[i][j][k] = this.sampler.sample_xyz(x, y, z);
                 }
             }
