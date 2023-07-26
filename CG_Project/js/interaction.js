@@ -7,6 +7,7 @@ const CAM_UP = vec3(0.0, 1.0, 0.0);
 class Camera{
     constructor (intrinsics){
         this.intrinsics = intrinsics; // Projection matrix
+        this.isActive = false;
     }
 
     update(delta_t){}
@@ -20,6 +21,10 @@ class Camera{
 
     get_cam_pos(){
         return null;
+    }
+
+    set_active(isActive){
+        this.isActive = isActive;
     }
 }
 
@@ -92,6 +97,8 @@ class KeyboardCam extends Camera{
     }
 
     handle_keydown(event){
+        if (!this.isActive)
+            return;
         switch (event.code){
             // Look upwards
             case "KeyQ" :{
@@ -160,6 +167,7 @@ class KeyboardCam extends Camera{
 }
 
 const MAX_SPEEDS = vec3(3, 0.01, 0.01);
+const MIN_PROPELLER_SPEED = 0.15;
 const ACCELS = vec3(0.6, 0.005, 0.005);
 class SubmarineCam extends Camera{
     constructor(gl, pos, dir){
@@ -167,7 +175,7 @@ class SubmarineCam extends Camera{
         this.submarine = new Submarine(gl, pos, dir);
         
         this.keypresses = vec3(0,0,0);
-        this.speeds = vec3(0,0,0); // FWD, UP, ANG
+        this.speeds = vec3(0.01,0,0); // FWD, UP, ANG - Small initial propeller speed to make it move
         
         // Quaternions for rotation control
         this.q_rot = new Quaternion().make_rot_vec2vec(MODEL_FWD, dir);
@@ -217,6 +225,9 @@ class SubmarineCam extends Camera{
     }
 
     handle_keydown(event){
+        if (!this.isActive)
+            return;
+
         switch (event.code){
             // Look upwards
             case "KeyQ" :{
@@ -296,7 +307,10 @@ class SubmarineCam extends Camera{
         // Get new tranform matrix for submarine
         const transform = mult(translate(pos[0], pos[1], pos[2]), this.q_rot.get_mat4());
         this.submarine.set_model_transform(pos, dir, this.q_rot, transform);
-        this.submarine.propeller.update(this.speeds[0], secs_elapsed);
+
+        // Move propeller
+        const propeller_speed = Math.sign(this.speeds[0]) * Math.max(MIN_PROPELLER_SPEED, Math.abs(this.speeds[0]));
+        this.submarine.propeller.update(propeller_speed, secs_elapsed);
 
         // Compute new position for camera
         // Camera position will be a mix between these

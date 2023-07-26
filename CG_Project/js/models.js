@@ -116,6 +116,7 @@ class ModelMesh extends Model{
         gl.drawElements(gl.TRIANGLES, this.n_vertices, gl.UNSIGNED_SHORT, 0);
     }
 }
+
 class Submarine extends Model{
     constructor(gl, pos, dir){
         super(gl);

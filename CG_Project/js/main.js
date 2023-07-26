@@ -44,7 +44,12 @@ function update_resolution(){
 // Toggle cameras
 window.onkeydown = function(event){
     if (event.code == "KeyX"){
+        // Disable old camera
+        cameras[camera_index].set_active(false);
         camera_index = (camera_index + 1) % cameras.length;
+        
+        // Enable new camera
+        cameras[camera_index].set_active(true);
         player_cam.pos = vec3(sub_cam.get_cam_pos());
     }
 }
@@ -81,8 +86,10 @@ window.onload = function init(){
     // Create submarine
     //sub_cam = new SubmarineCam(gl, vec3(0, 0, 0), vec4(0,0,1,0));
     //sub_cam = new SubmarineCam(gl, vec3(-4, 0.5, 0), vec4(0,0,1,0));
-    sub_cam = new SubmarineCam(gl, vec3(-7, 0.5,-9), vec4(0,0,1,0));
+    //sub_cam = new SubmarineCam(gl, vec3(-7, 0.5,-9), vec4(0,0,1,0));
+    sub_cam = new SubmarineCam(gl, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
     cameras.push(sub_cam);
+    sub_cam.set_active(true);
     camera_index = cameras.length - 1; // Set camera index to be submarine camera
     lights = sub_cam.submarine.lights;
     models.push(sub_cam.submarine);
@@ -119,14 +126,14 @@ function render(timestamp){
         last_fps_stamp = timestamp;
     }
         
-
     // Update the chunks
     chunk_manager.update_chunks(sub_cam.submarine.pos);
-
     
     // Update camera positions and matrices
-    current_cam.update(delta_t);
-
+    for (var i = 0; i < cameras.length; i++){
+        cameras[i].update(delta_t);
+    }
+    //current_cam.update(delta_t);
     const camera_matrix = current_cam.get_cam_matrix();
     
     
