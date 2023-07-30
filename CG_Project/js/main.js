@@ -158,6 +158,7 @@ function render(timestamp){
     for (var i = 0; i < models.length; i++)
         models[i].draw_model(gl.model_shader);
 
+
     last_timestamp = timestamp;
     requestAnimationFrame(render);
 }

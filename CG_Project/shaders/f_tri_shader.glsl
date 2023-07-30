@@ -1,3 +1,4 @@
+#version 300 es
 precision mediump float;
 
 uniform vec4 u_camera_pos;
@@ -25,13 +26,15 @@ uniform vec2 texmapscale;
 uniform vec3 L_a;
 
 // Varying pr. pixel
-varying vec4 v_position;
-varying vec4 v_normal;
-varying vec4 v_color;
+in vec4 v_position;
+in vec4 v_normal;
+in vec4 v_color;
 
 // Varying positions in light sources
-varying vec4 v_position_in_light_0;
-varying vec4 v_position_in_light_1;
+in vec4 v_position_in_light_0;
+in vec4 v_position_in_light_1;
+
+out vec4 out_color;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -79,7 +82,7 @@ float unpackDepth(const in vec4 rgbaDepth) {
 } 
 
 vec4 offset_lookup(sampler2D map, vec3 shadowCoord, vec2 offset) { 
-	return texture2D(map, shadowCoord.xy + offset*texmapscale); 
+	return texture(map, shadowCoord.xy + offset*texmapscale); 
 }
 
 // Percentage closest filtering 
@@ -126,6 +129,6 @@ void main(){
 	view_color.xyz = v_color.xyz * L_a;
 	view_color += v_color * (lightness_0 * visibility_0 + lightness_1 * visibility_1);
 
-	gl_FragColor = view_color;
-	gl_FragColor = mix(view_color, BG_COLOR, depthfog());
+	out_color = view_color;
+	out_color = mix(view_color, BG_COLOR, depthfog());
 }
