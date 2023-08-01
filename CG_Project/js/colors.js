@@ -1,7 +1,7 @@
 "use strict";
 
-const COLORMAP = [[26/256, 42/256, 108/256], [178/256, 31/256, 31/256], [253/256 , 187/256, 45/256]]
-//const COLORMAP = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+//const COLORMAP = [[26/256, 42/256, 108/256], [178/256, 31/256, 31/256], [253/256 , 187/256, 45/256]]
+const COLORMAP = [[1, 1, 1]]
 
 // Returns a color based on the colormap, for 0 <= x <= 1
 function get_color(x){

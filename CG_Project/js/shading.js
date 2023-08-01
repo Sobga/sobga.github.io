@@ -13,7 +13,12 @@ const UNIFORMS = {
     LIGHT_POSITION: "l_pos",
     LIGHT_EMISSION: "l_e",
     LIGHT_MATRIX: "light_mat",
+    LIGHT_MATRICES: "light_mats",
+    LIGHT_EMISSIONS: "light_emissions",
+    LIGHT_DIRECTIONS: "light_dirs",
+    LIGHT_POSITIONS: "light_positions",
     SHADOW_MAP: "shadow_map",
+    SHADOW_MAPS: "shadow_maps",
     SHADOW_SCALE: "texmapscale",
     LIGHT_AMBIENT: "L_a",
     MATERIAL_DIFFUSE: "k_d",
@@ -23,11 +28,14 @@ const UNIFORMS = {
 
 const UNIFORM_TYPES = {
     MAT4 : "mat4",
+    MAT4V : "mat4v",
     VEC2 : "vec2",
     VEC3 : "vec3",
     VEC4: "vec4",
     FLOAT: "float",
-    TEXTURE_INDEX: "tex_index"
+    TEXTURE_INDEX: "tex_index",
+    INT: "int",
+    INT_ARRAY: "int_array"
 }
 
 class Shader{
@@ -95,6 +103,9 @@ class Shader{
         switch (uniform.type){
             case UNIFORM_TYPES.MAT4:
                 this.gl.uniformMatrix4fv(uniform, false, flatten(uniform.value));
+                break
+            case UNIFORM_TYPES.MAT4V:
+                this.gl.uniformMatrix4fv(uniform, false, flatten(uniform.value));
                 break;
             case UNIFORM_TYPES.VEC2:
                 this.gl.uniform2fv(uniform, flatten(uniform.value));
@@ -110,6 +121,12 @@ class Shader{
                 break;
             case UNIFORM_TYPES.TEXTURE_INDEX:
                 this.gl.uniform1i(uniform, uniform.value);
+                break;
+            case UNIFORM_TYPES.INT:
+                this.gl.uniform1i(uniform, uniform.value);
+                break;
+            case UNIFORM_TYPES.INT_ARRAY:
+                this.gl.uniform1iv(uniform, uniform.value);
                 break;
 
             default: throw "No function specified for upload to shader for given uniform type"
@@ -154,17 +171,23 @@ class ModelShader extends Shader{
 
         // Uniforms for spot-lights
         for (var i = 0; i < 2; i++){
-            this.add_uniform(UNIFORMS.LIGHT_POSITION + "_" + i, UNIFORM_TYPES.VEC4)
-            this.add_uniform(UNIFORMS.LIGHT_DIRECTION + "_" + i, UNIFORM_TYPES.VEC4)
-            this.add_uniform(UNIFORMS.LIGHT_EMISSION + "_" + i, UNIFORM_TYPES.VEC3);
-            this.add_uniform(UNIFORMS.LIGHT_MATRIX + "_" + i, UNIFORM_TYPES.MAT4);
+            //this.add_uniform(UNIFORMS.LIGHT_POSITION + "_" + i, UNIFORM_TYPES.VEC4)
+            //this.add_uniform(UNIFORMS.LIGHT_DIRECTION + "_" + i, UNIFORM_TYPES.VEC4)
+            //this.add_uniform(UNIFORMS.LIGHT_EMISSION + "_" + i, UNIFORM_TYPES.VEC3);
+            //this.add_uniform(UNIFORMS.LIGHT_MATRIX + "_" + i, UNIFORM_TYPES.MAT4);
+        }
 
-            this.add_uniform(UNIFORMS.SHADOW_MAP + "_" + i, UNIFORM_TYPES.TEXTURE_INDEX);
-        }   
+        this.add_uniform(UNIFORMS.SHADOW_MAPS, UNIFORM_TYPES.INT);
+        this.add_uniform(UNIFORMS.LIGHT_POSITIONS, UNIFORM_TYPES.VEC4);
+        this.add_uniform(UNIFORMS.LIGHT_DIRECTIONS, UNIFORM_TYPES.VEC4);
+        this.add_uniform(UNIFORMS.LIGHT_EMISSIONS, UNIFORM_TYPES.VEC3);
+        this.add_uniform(UNIFORMS.LIGHT_MATRICES, UNIFORM_TYPES.MAT4V);
+
+        // Scale of shadow-maps
+        this.add_uniform(UNIFORMS.SHADOW_SCALE, UNIFORM_TYPES.VEC2);
 
         // Uniform for ambient light
         this.add_uniform(UNIFORMS.LIGHT_AMBIENT, UNIFORM_TYPES.VEC3);
-        this.add_uniform(UNIFORMS.SHADOW_SCALE, UNIFORM_TYPES.VEC2);
 
         // Uniforms for material shading
         this.add_uniform(UNIFORMS.MATERIAL_DIFFUSE, UNIFORM_TYPES.FLOAT);
@@ -175,13 +198,43 @@ class ModelShader extends Shader{
     }
 
     apply_lights(lights){
-        for (var i = 0; i < 2; i++){
+        const n_lights = 2; // TODO: Get from lighting manager
+        const light_positions = new Float32Array(4*n_lights);
+        const light_dirs = new Float32Array(4*n_lights);
+        const light_emissions = new Float32Array(3*n_lights);
+        const light_matrices = new Float32Array(16*n_lights);
+
+        for (var i = 0; i < n_lights; i++){
             const light = lights[i];
-            this.set_uniform_value(UNIFORMS.LIGHT_POSITION + "_" + i, light.pos);
-            this.set_uniform_value(UNIFORMS.LIGHT_DIRECTION + "_" + i, light.dir);
-            this.set_uniform_value(UNIFORMS.LIGHT_EMISSION + "_" + i, light.emission);
-            this.set_uniform_value(UNIFORMS.LIGHT_MATRIX + "_" + i, light.get_cam_matrix());
+            
+            for (var j = 0; j < 4; j++){
+                light_positions[4*i + j] = light.pos[j];
+                light_dirs[4*i + j] = light.dir[j];
+            }
+            for (var j = 0; j < 3; j++){
+                light_emissions[3*i + j] = light.emission[j];
+            }
+            //this.set_uniform_value(UNIFORMS.LIGHT_POSITION + "_" + i, light.pos);
+            //this.set_uniform_value(UNIFORMS.LIGHT_DIRECTION + "_" + i, light.dir);
+
+            //this.set_uniform_value(UNIFORMS.LIGHT_EMISSION + "_" + i, light.emission);
+            
+
+            // Flatten light matrix into array
+            const light_mat = light.get_cam_matrix();
+            for (var j = 0; j < 16; j++){
+                light_matrices[16*i+j] = light_mat[j & 3][j >> 2];
+            }
+            //this.set_uniform_value(UNIFORMS.LIGHT_MATRIX + "_" + i, );
         }
+        
+        
+        // Upload uniforms
+        this.set_uniform_value(UNIFORMS.LIGHT_POSITIONS, light_positions);
+        this.set_uniform_value(UNIFORMS.LIGHT_DIRECTIONS, light_dirs);
+        this.set_uniform_value(UNIFORMS.LIGHT_EMISSIONS, light_emissions);
+        this.set_uniform_value(UNIFORMS.LIGHT_MATRICES, light_matrices);
+
     }
 
     apply_shader(model){
@@ -211,63 +264,3 @@ class ShadowShader extends Shader{
         this.add_attribute(ATTRIBUTES.POSITION);
     }
 }
-/*
-const SHAPES = {
-    POINT: "Point",
-    TRIANGLE: "Triangle",
-    CIRCLE: "Circle"
-};
-
-const COLORS = [
-    vec4(0.0, 0.0, 0.0, 1.0),
-    vec4(1.0, 0.0, 0.0, 1.0),
-    vec4(1.0, 1.0, 0.0, 1.0),
-    vec4(0.0, 1.0, 0.0, 1.0),
-    vec4(0.0, 0.0, 1.0, 1.0),
-    vec4(1.0, 0.0, 1.0, 1.0),
-    vec4(0.0, 1.0, 1.0, 1.0),
-    vec4(1.0, 1.0, 1.0, 1.0),
-    vec4(0.3921, 0.5843, 0.9294, 1.0),
-];
-
-
-const LINE_INDICES = [
-    0, 1,
-    0, 3,
-    0, 4,
-    1, 2,
-    1, 5,
-    2, 6,
-    2, 3,
-    3, 7,
-    4, 5,
-    4, 7,
-    5, 6,
-    6, 7
-];
-
-const CUBE_INDICES = [
-    1, 0, 3,
-    3, 2, 1,
-    2, 3, 7,
-    7, 6, 2,
-    3, 0, 4,
-    4, 7, 3,
-    6, 5, 1,
-    1, 2, 6,
-    4, 5, 6,
-    6, 7, 4,
-    5, 4, 0,
-    0, 1, 5
-];*/
-
-/*const CUBE_VERTS = [
-    vec4(-0.5, -0.5, 0.5, 1.0),
-    vec4(-0.5, 0.5, 0.5, 1.0),
-    vec4(0.5, 0.5, 0.5, 1.0),
-    vec4(0.5, -0.5, 0.5, 1.0),
-    vec4(-0.5, -0.5, -0.5, 1.0),
-    vec4(-0.5, 0.5, -0.5, 1.0),
-    vec4(0.5, 0.5, -0.5, 1.0),
-    vec4(0.5, -0.5, -0.5, 1.0)
-]*/

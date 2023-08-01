@@ -170,9 +170,9 @@ const MAX_SPEEDS = vec3(3, 0.01, 0.01);
 const MIN_PROPELLER_SPEED = 0.15;
 const ACCELS = vec3(0.6, 0.005, 0.005);
 class SubmarineCam extends Camera{
-    constructor(gl, pos, dir){
+    constructor(gl, lightManager, pos, dir){
         super(perspective(CAM_FOV, 1, CAM_NEAR, CAM_FAR));
-        this.submarine = new Submarine(gl, pos, dir);
+        this.submarine = new Submarine(gl, lightManager, pos, dir);
         
         this.keypresses = vec3(0,0,0);
         this.speeds = vec3(0.01,0,0); // FWD, UP, ANG - Small initial propeller speed to make it move

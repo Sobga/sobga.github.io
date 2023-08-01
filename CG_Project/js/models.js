@@ -46,13 +46,14 @@ class Model{
     set_buffer_data(buffer_id, data, is_element_array){
         const buffer = this.get_buffer(buffer_id)
         if (is_element_array != undefined && is_element_array){
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
+            this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
         } else {
-            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-            gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+            this.gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            this.gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
         }
     }
+
     set_buffer_sub_data(buffer_id, index, data){
         gl.bindBuffer(gl.ARRAY_BUFFER, this.get_buffer(buffer_id));
         gl.bufferSubData(gl.ARRAY_BUFFER, index, flatten(data));
@@ -118,7 +119,7 @@ class ModelMesh extends Model{
 }
 
 class Submarine extends Model{
-    constructor(gl, pos, dir){
+    constructor(gl, lightManager, pos, dir){
         super(gl);
         this.pos = pos;
         this.dir = dir;
@@ -129,15 +130,14 @@ class Submarine extends Model{
 
         // Initialize light sources
         for (var i = 0; i < 2; i++){
-            const light = new Spotlight(gl, light_offsets[i], light_directions[i], i);
+            const light = lightManager.create_spotlight(light_offsets[i], light_directions[i]);
             light.offset = light_offsets[i];
             light.start_direction = light_directions[i];
             this.lights.push(light);
         }
-        // Turn off other light
+
         this.hull = new SubmarineHull(gl);
         this.propeller = new SubmarinePropeller(gl);
-
         this.set_model_transform(pos, dir, new Quaternion(), mat4());
     }
 
