@@ -18,8 +18,8 @@ const models = [];
 let lightManager;
 
 //const noise_sampler = new SphereSampler([vec3(0, 0, 15), vec3(0,0, 4)], [7, 2]);
-const noise_sampler = new PlaneSampler();
-//const noise_sampler = new SimplexSampler(0);
+//const noise_sampler = new PlaneSampler();
+const noise_sampler = new SimplexSampler(0);
 let chunk_manager;
 
 var last_timestamp = 0;
@@ -86,10 +86,10 @@ window.onload = function init(){
     lightManager = new LightManager(gl);
 
     // Create submarine
-    sub_cam = new SubmarineCam(gl, lightManager, vec3(0, 0, 0), vec4(0,0,1,0));
+    //sub_cam = new SubmarineCam(gl, lightManager, vec3(0, -16, -8), vec4(-1,0,0,0));
     //sub_cam = new SubmarineCam(gl, vec3(-4, 0.5, 0), vec4(0,0,1,0));
     //sub_cam = new SubmarineCam(gl, vec3(-7, 0.5,-9), vec4(0,0,1,0));
-    //sub_cam = new SubmarineCam(gl, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
+    sub_cam = new SubmarineCam(gl, lightManager, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
     cameras.push(sub_cam);
     sub_cam.set_active(true);
     camera_index = cameras.length - 1; // Set camera index to be submarine camera

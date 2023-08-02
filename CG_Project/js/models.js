@@ -55,8 +55,13 @@ class Model{
     }
 
     set_buffer_sub_data(buffer_id, index, data){
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.get_buffer(buffer_id));
-        gl.bufferSubData(gl.ARRAY_BUFFER, index, flatten(data));
+        this.gl.bindBuffer(gl.ARRAY_BUFFER, this.get_buffer(buffer_id));
+        this.gl.bufferSubData(gl.ARRAY_BUFFER, index, flatten(data));
+    }
+
+    set_buffer_sub_data_length(buffer_id, index, data, length){
+        this.gl.bindBuffer(gl.ARRAY_BUFFER, this.get_buffer(buffer_id));
+        this.gl.bufferSubData(gl.ARRAY_BUFFER, index, data, 0, length);
     }
 
     get_buffer(buffer_id){

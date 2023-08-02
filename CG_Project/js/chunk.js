@@ -52,52 +52,6 @@ class ChunkEntry{
         this.buffer_index = index;
         this.n_vertices = -1;
     }
-
-    generate_vertices(levels){
-        var vertices = [];
-
-        const offset_x = -CHUNK_HALF + this.pos[0] * CHUNK_SIZE;
-        const offset_y = -CHUNK_HALF + this.pos[1] * CHUNK_SIZE;
-        const offset_z = -CHUNK_HALF + this.pos[2] * CHUNK_SIZE;
-
-        const cube_points = [];
-        const cube_levels = [];
-        for (var i = 0; i < CHUNK_VERTS.length; i++){
-            cube_points.push(vec4(0,0,0,1));
-            cube_levels.push(1);
-        }
-
-        for (var i = 0; i < CHUNK_SIZE; i++){
-            const x = i + offset_x;
-
-            for (var j = 0; j < CHUNK_SIZE; j++){
-                const y = j + offset_y;
-
-                for (var k = 0; k < CHUNK_SIZE; k++){
-                    const z = k + offset_z;
-                
-                    // Fetch computed levels
-                    for (var m = 0; m < CHUNK_VERTS.length; m++){
-                        const cube_offset = CHUNK_VERTS[m];
-                    
-                        cube_points[m][0] = x + cube_offset[0];
-                        cube_points[m][1] = y + cube_offset[1];
-                        cube_points[m][2] = z + cube_offset[2];
-                        
-                        cube_levels[m] = levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
-                    }
-
-                    // Vertices for a single cube
-                    var cube_vertices = Polygonise(cube_points, cube_levels, 0);
-         
-                    // Append new vertices
-                    if (cube_vertices.length > 0)
-                        vertices.push.apply(vertices, cube_vertices);
-                }
-            }
-        }
-        return vertices;
-    }
 }
 
 class ChunkGenerator extends Model{
@@ -107,33 +61,33 @@ class ChunkGenerator extends Model{
         this.sampler = sampler;
         this.render_distance = render_distance;
         this.cube_length = 2*render_distance + 1;
-        this.current_chunk = null;
-        this.current_chunk_vertices = null;
+        
 
         // Number of vertices for chunk & total vertex count
         this.max_vertex_chunk = get_max_vertex(false) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
-        this.n_chunks = this.chunks.length;
-        this.n_vertices = this.n_chunks * this.max_vertex_chunk;
-
+        this.vertex_storage = new Float32Array(4 * this.max_vertex_chunk);
+        this.normal_storage = new Float32Array(4 * this.max_vertex_chunk);
+        this.color_storage = new Float32Array(4 * this.max_vertex_chunk);
+        
+        const max_vertices = this.chunks.length * this.max_vertex_chunk; // Maximum number of vertices in total
+        
         // Init vertex buffer
         const vertex_buffer = this.add_buffer(ATTRIBUTES.POSITION, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * this.n_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
 
         // Init normal buffer
         const normal_buffer = this.add_buffer(ATTRIBUTES.NORMAL, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, normal_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * this.n_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
 
         // Init color buffer
         const color_buffer = this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * this.n_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
 
-        //this.free_indices = [0];
-        //this.free_positions = [vec3(0,0,0), vec3(0,1,0)];
-        this.free_indices = Array.from(Array(this.n_chunks).keys());    
-        this.free_positions = get_chunk_positions(this.render_distance, vec3(0,0,0));
+        this.missing_indices = Array.from(Array(this.chunks.length).keys());    
+        this.chunk_queue = get_chunk_positions(this.render_distance, vec3(0,0,0));
         
         // Map to determine which chunks are missing when center is moved
         this.chunk_map = new Map();
@@ -169,8 +123,8 @@ class ChunkGenerator extends Model{
     start_generator(offset){
         // Clear from previous generation
         this.chunk_data_ready = false;
-        this.free_positions = [];
-        this.free_indices = [];
+        this.chunk_queue = [];
+        this.missing_indices = [];
 
         // Mark each chunk position as not present
         this.chunk_map.forEach((_, key, __) => this.chunk_map.set(key, false));
@@ -183,10 +137,9 @@ class ChunkGenerator extends Model{
             else{
                 // Chunk is not inside render distance anymore. Mark it to be generated again
                 chunk.n_vertices = -1;
-                this.free_indices.push(chunk.buffer_index);
+                this.missing_indices.push(chunk.buffer_index);
             }
         }
-
 
         // Compute missing positions
         this.chunk_map.forEach(
@@ -196,34 +149,30 @@ class ChunkGenerator extends Model{
                     chunk_position[0] += offset[0];
                     chunk_position[1] += offset[1];
                     chunk_position[2] += offset[2];
-                    this.free_positions.push(chunk_position);
+                    this.chunk_queue.push(chunk_position);
                 }
             }
         );
     }
 
     update_chunks(){
-        if (this.free_indices.length == 0)
+        // Are we done generating?
+        if (this.missing_indices.length == 0)
             return;
 
-        // Spread computation of chunk over 2 frames
-        if (this.current_chunk == null){
-            // Find next index to generate and chunk position
-            const free_index = this.free_indices.shift();
-            const position = this.free_positions.shift();
-            const chunk = this.chunks[free_index];
-            chunk.pos = position;
-            this.generate_chunk_data(chunk);
-            this.current_chunk = chunk;
-
-        } else{
-            // Data is ready for triangulation
-            this.chunk_norm_color(this.current_chunk);
-            this.current_chunk = null;
-        }
+        // Find empty chunk
+        const free_index = this.missing_indices.shift();    
+        const chunk = this.chunks[free_index];
+        chunk.pos = this.chunk_queue.shift();
+        
+        // Generate and upload data
+        this.sample_chunk_levels(chunk);
+        const n_vertices = this.generate_vertices(chunk);
+        this.compute_chunk_data(chunk, n_vertices);
+        this.upload_chunk_data(chunk, n_vertices);
     }
 
-    generate_chunk_data(chunk){
+    sample_chunk_levels(chunk){
         const offset_x = -CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE;
         const offset_y = -CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
         const offset_z = -CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
@@ -241,29 +190,95 @@ class ChunkGenerator extends Model{
                 }
             }
         }
-
-        // Compute triangulated vertices
-        this.current_chunk_vertices = chunk.generate_vertices(this.chunk_levels);
     }
 
-    chunk_norm_color(chunk){
-        const vertices = this.current_chunk_vertices;
-        const normals = vertices.map((x,_) => normalize(noise_sampler.deriv_norm(x)));
-        const colors = vertices.map((vertex, _) => get_color(this.sampler.sample_1d(vertex[1] / 16)));
+    generate_vertices(chunk){
+        var vertex_count = 0;
+        const offset_x = -CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE;
+        const offset_y = -CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
+        const offset_z = -CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
 
-        chunk.n_vertices = vertices.length;
+        const cube_points = [];
+        const cube_levels = [];
+        for (var i = 0; i < CHUNK_VERTS.length; i++){
+            cube_points.push(vec4(0,0,0,1));
+            cube_levels.push(1);
+        }
 
+        for (var i = 0; i < CHUNK_SIZE; i++){
+            const x = i + offset_x;
+
+            for (var j = 0; j < CHUNK_SIZE; j++){
+                const y = j + offset_y;
+
+                for (var k = 0; k < CHUNK_SIZE; k++){
+                    const z = k + offset_z;
+                
+                    // Fetch computed levels
+                    for (var m = 0; m < CHUNK_VERTS.length; m++){
+                        const cube_offset = CHUNK_VERTS[m];
+                    
+                        cube_points[m][0] = x + cube_offset[0];
+                        cube_points[m][1] = y + cube_offset[1];
+                        cube_points[m][2] = z + cube_offset[2];
+                        
+                        cube_levels[m] = this.chunk_levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
+                    }
+
+                    // Vertices for a single cube
+                    var cube_vertices = Polygonise(cube_points, cube_levels, 0);
+         
+                    // Append new vertices
+                    for (var ii = 0; ii < cube_vertices.length; ii++){
+                        const vertex = cube_vertices[ii];
+                        for (var jj = 0; jj < 4; jj++){
+                            this.vertex_storage[4*vertex_count+jj] = vertex[jj];
+                        }
+                        vertex_count+=1;
+                    }
+                }
+            }
+        }
+        return vertex_count;
+    }
+
+    compute_chunk_data(chunk, n_vertices){
+        //const normals = vertices.map((x,_) => normalize(noise_sampler.deriv_norm(x)));
+        //const colors = vertices.map((vertex, _) => get_color(this.sampler.sample_1d(vertex[1] / 16)));
+        for (var i = 0; i < n_vertices; i++){
+            const vertex_start = 4 * i;
+            const vertex_x = this.vertex_storage[vertex_start];
+            const vertex_y = this.vertex_storage[vertex_start + 1];
+            const vertex_z = this.vertex_storage[vertex_start + 2];
+
+            const normal = this.sampler.deriv_norm_xyz(vertex_x, vertex_y, vertex_z);
+            const color = get_color(this.sampler.sample_1d(vertex_y/16));
+
+            for (var j = 0; j < 4; j++){
+                this.normal_storage[vertex_start + j] = normal[j];
+                this.color_storage[vertex_start + j] = color[j];
+            }
+        }
+
+        return n_vertices;
+    }
+
+    upload_chunk_data(chunk, n_vertices){
         // Compute index in buffer
-        const index = chunk.buffer_index * this.max_vertex_chunk;
+        const buffer_index = chunk.buffer_index * this.max_vertex_chunk * sizeof['vec4'];
 
         // Push vertices
-        this.set_buffer_sub_data(ATTRIBUTES.POSITION, index * sizeof['vec4'], vertices);
+        //this.set_buffer_sub_data(ATTRIBUTES.POSITION, index, vertices);
+        this.set_buffer_sub_data_length(ATTRIBUTES.POSITION, buffer_index, this.vertex_storage, 4*n_vertices);
 
         // Push normals
-        this.set_buffer_sub_data(ATTRIBUTES.NORMAL, index * sizeof['vec4'], normals);
+        //this.set_buffer_sub_data(ATTRIBUTES.NORMAL, index * sizeof['vec4'], normals);
+        this.set_buffer_sub_data_length(ATTRIBUTES.NORMAL, buffer_index, this.normal_storage, 4*n_vertices);
         
         // Push colors
-        this.set_buffer_sub_data(ATTRIBUTES.COLOR, index * sizeof['vec4'], colors);
+        //this.set_buffer_sub_data(ATTRIBUTES.COLOR, index * sizeof['vec4'], colors);
+        this.set_buffer_sub_data_length(ATTRIBUTES.COLOR, buffer_index, this.color_storage, 4*n_vertices);
+        chunk.n_vertices = n_vertices;
     }
 
     draw(){
@@ -281,6 +296,8 @@ function outside(element){
 }
 
 class ChunkManager{
+    // TODO: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
+
     // Store 3x3 chunks which is the "safe" zone 
     constructor(gl, sampler, render_distance){
         this.chunks = get_chunk_positions(render_distance, vec3(0,0,0)).map((position, index) => new ChunkEntry(position, index));  
@@ -314,4 +331,3 @@ class ChunkManager{
         this.chunk_generator.draw_model(shader);
     }
 }
-
