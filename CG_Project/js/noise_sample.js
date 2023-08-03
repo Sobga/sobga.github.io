@@ -1,5 +1,27 @@
 const DERIV_STEP = 0.05;
 
+const SAMPLER_TYPE = {
+    SPHERE: 0,
+    PLANE: 1,
+    SIMPLEX: 2
+}
+
+
+/**
+ * 
+ * @param {SAMPLER_TYPE} type Type of sampler
+ * @param {Constructor} args 
+ * @returns {Sampler}
+ */
+
+function sampler_from_type(type, args){
+    switch (type){
+        case SAMPLER_TYPE.SPHERE: return new SphereSampler(args[0], args[1]);
+        case SAMPLER_TYPE.PLANE: return new PlaneSampler();
+        case SAMPLER_TYPE.SIMPLEX: return new SimplexSampler(args);
+    }
+}
+
 class Sampler{
     constructor(){}
     sample(pos){
@@ -26,7 +48,11 @@ class Sampler{
         return vec4(-dx, -dy, -dz, 0.0);
     }
 
-    // Normalized derivative vector
+    /**
+     * Normalized derivative vector
+     * @param {vec3} pos Position to sample
+     * @returns {vec3} Normalized derivative
+     */
     deriv_norm(pos){
         const dx = this.sample_xyz(pos[0] + DERIV_STEP, pos[1], pos[2]) - this.sample_xyz(pos[0] - DERIV_STEP, pos[1], pos[2]);
         const dy = this.sample_xyz(pos[0], pos[1] + DERIV_STEP, pos[2]) - this.sample_xyz(pos[0], pos[1] - DERIV_STEP, pos[2]);
@@ -36,6 +62,13 @@ class Sampler{
         return vec4(-dx/length, -dy/length, -dz/length, 0.0);
     }
 
+    /**
+     * Normalized derivative vector
+     * @param {float} x x-coordinate to sample
+     * @param {float} y y-coordinate to sample
+     * @param {float} z y-coordinate to sample
+     * @returns {vec3} Normalized derivative vector at location
+     */
     deriv_norm_xyz(x,y,z){
         const dx = this.sample_xyz(x + DERIV_STEP, y, z) - this.sample_xyz(x - DERIV_STEP, y, z);
         const dy = this.sample_xyz(x, y + DERIV_STEP, z) - this.sample_xyz(x, y - DERIV_STEP, z);
@@ -43,6 +76,14 @@ class Sampler{
 
         const length = Math.sqrt(dx*dx +dy*dy + dz*dz);
         return vec4(-dx/length, -dy/length, -dz/length, 0.0);
+    }
+
+    sampler_type(){
+        throw 'No sampler-type defined for superclass'
+    }
+
+    sampler_args(){
+        throw 'Not implemented'
     }
 }
 
@@ -65,17 +106,24 @@ class SphereSampler extends Sampler{
         }
         return - min_dist;
     }
+
+    sampler_type(){
+        return SAMPLER_TYPE.SPHERE;
+    }
 }
 
 class PlaneSampler extends Sampler{
     constructor(){
         super();
-
     }
 
     sample_xyz(x,y,z){
         return z - 2;
         //return Math.sin(z/(Math.PI) - 0.8); 
+    }
+
+    sampler_type(){
+        return SAMPLER_TYPE.PLANE;
     }
 }
 
@@ -91,5 +139,13 @@ class SimplexSampler extends Sampler{
 
     sample_1d(x){
         return 1.5*noise_simplex_2d(x, this.seed);
+    }
+
+    sampler_type(){
+        return SAMPLER_TYPE.SIMPLEX;
+    }
+
+    sampler_args(){
+        return this.seed;
     }
 }

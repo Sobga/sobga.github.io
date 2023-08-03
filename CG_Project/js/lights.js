@@ -79,11 +79,6 @@ class LightManager{
     
         // Create light
         const light = new Spotlight(this.gl, pos, dir, fbo);
-
-        if (tex_layer == 0)
-            light.emission = vec3(1,0,0);
-        else
-            light.emission = vec3(0,1,0);
         this.lights.push(light);
 
         // Unbind for safety

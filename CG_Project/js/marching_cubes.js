@@ -398,9 +398,10 @@ function VertexInterp(isolevel, p1, p2, val_p1, val_p2){
    var mu;
    
    
-   var p = vec4(p1[0], p1[1], p1[2], p1[3]);
+   var p = [p1[0], p1[1], p1[2], p1[3]];
    if (Math.abs(isolevel-val_p1) < EPSILON)
       return(p);
+      
    if (Math.abs(isolevel-val_p2) < EPSILON){
       p[0] = p2[0];
       p[1] = p2[1];
