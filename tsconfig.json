@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Recommended"
+}
