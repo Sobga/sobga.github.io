@@ -1,4 +1,4 @@
-import { quadrant_origin, rotate, rotation_matrix_xaxis } from "./utils.js";
+import { p_orientation, quadrant_origin, rotate, rotation_matrix_xaxis } from "./utils.js";
 
 export class Point {
     x: number;
@@ -6,6 +6,10 @@ export class Point {
     constructor(x: number, y:number){
         this.x = x;
         this.y = y;
+    }
+
+    toString(){
+        return `(${this.x}, ${this.y})`;
     }
 }
 
@@ -26,26 +30,9 @@ export class Vertex extends Point {
         }
         yield current_edge;
     }
-}
 
-class IncidentEdgeIterator implements Iterator<HalfEdge>{
-    start: Vertex;
-    current_edge: HalfEdge;
-
-    constructor(start: Vertex){
-        this.start = start;
-        this.current_edge = start.incident_edge;
-        console.assert(this.start.incident_edge != null);
-    }
-
-    next(): IteratorResult<HalfEdge, boolean> {
-        if (this.current_edge != this.start.incident_edge){
-            const res = this.current_edge;
-            this.current_edge = this.current_edge.twin.next;
-            return{value: res, done: false};
-        } else{
-            return {value: null, done: true};
-        }
+    toString(){
+        return `(${this.x}, ${this.y})`;
     }
 }
 

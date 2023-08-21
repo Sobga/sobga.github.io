@@ -1,4 +1,12 @@
 import { Point, Vertex } from "./polygon.js";
+export function dist_sq_p(p, q) {
+    return dist_sq(p.x, q.x, p.y, q.y);
+}
+export function dist_sq(min_x, max_x, min_y, max_y) {
+    const dx = max_x - min_x;
+    const dy = max_y - min_y;
+    return dx * dx + dy * dy;
+}
 /* From module 5, slide 19
  > 0    -> Left
  < 0    -> Right
@@ -10,6 +18,26 @@ export function p_orientation(p, q, r) {
 function intersects(p1, p2, q1, q2) {
     return p_orientation(p1, p2, q1) * p_orientation(p1, p2, q2) <= 0 &&
         p_orientation(q1, q2, p1) * p_orientation(q1, q2, p2) <= 0;
+}
+export function is_reflex(prev, now, next) {
+    return p_orientation(prev, now, next) < 0;
+}
+/**
+ * Computes the bounding box of the given points
+ * @returns Bounding box in [min_x, max_x, min_y, max_y]
+ */
+export function bbox(points) {
+    var min_x = points[0].x;
+    var max_x = points[0].x;
+    var min_y = points[0].y;
+    var max_y = points[0].y;
+    for (const p of points) {
+        min_x = p.x < min_x ? p.x : min_x;
+        max_x = p.x > max_x ? p.x : max_x;
+        min_y = p.y < min_y ? p.y : min_y;
+        max_y = p.y > max_y ? p.y : max_y;
+    }
+    return [min_x, max_x, min_y, max_y];
 }
 // https://stackoverflow.com/a/20925869/
 function bbox_overlap(p0, p1, q0, q1) {

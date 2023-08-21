@@ -1,5 +1,16 @@
 import { HalfEdge, Point, Vertex } from "./polygon.js";
 
+export function dist_sq_p(p: Point, q: Point){
+    return dist_sq(p.x, q.x, p.y, q.y);
+}
+
+export function dist_sq(min_x: number, max_x: number, min_y: number, max_y: number){
+    const dx = max_x - min_x;
+    const dy = max_y - min_y;
+
+    return dx*dx + dy*dy;
+}
+
 /* From module 5, slide 19
  > 0    -> Left
  < 0    -> Right
@@ -14,6 +25,30 @@ function intersects(p1: Point, p2: Point, q1: Point, q2: Point): boolean{
            p_orientation(q1, q2, p1) * p_orientation(q1, q2, p2) <= 0
 }
 
+
+export function is_reflex(prev: Point, now: Point, next: Point): boolean{
+    return p_orientation(prev, now, next) < 0;
+}
+
+/**
+ * Computes the bounding box of the given points
+ * @returns Bounding box in [min_x, max_x, min_y, max_y]
+ */
+export function bbox(points: Point[]): [number, number, number, number]{
+    var min_x = points[0].x;
+    var max_x = points[0].x;
+    var min_y = points[0].y;
+    var max_y = points[0].y;
+    for (const p of points){
+        min_x = p.x < min_x ? p.x : min_x;
+        max_x = p.x > max_x ? p.x : max_x;
+
+        min_y = p.y < min_y ? p.y : min_y;
+        max_y = p.y > max_y ? p.y : max_y;
+    }
+
+    return [min_x, max_x, min_y, max_y];
+}
 // https://stackoverflow.com/a/20925869/
 function bbox_overlap(p0: Point, p1: Point, q0: Point, q1: Point): boolean{
     const [pmin_x, pmax_x] = p0.x < p1.x ? [p0.x, p1.x] : [p1.x, p0.x];

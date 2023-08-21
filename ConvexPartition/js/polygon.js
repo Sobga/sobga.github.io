@@ -4,6 +4,9 @@ export class Point {
         this.x = x;
         this.y = y;
     }
+    toString() {
+        return `(${this.x}, ${this.y})`;
+    }
 }
 export class Vertex extends Point {
     constructor(x, y, incident_edge = null) {
@@ -19,22 +22,8 @@ export class Vertex extends Point {
         }
         yield current_edge;
     }
-}
-class IncidentEdgeIterator {
-    constructor(start) {
-        this.start = start;
-        this.current_edge = start.incident_edge;
-        console.assert(this.start.incident_edge != null);
-    }
-    next() {
-        if (this.current_edge != this.start.incident_edge) {
-            const res = this.current_edge;
-            this.current_edge = this.current_edge.twin.next;
-            return { value: res, done: false };
-        }
-        else {
-            return { value: null, done: true };
-        }
+    toString() {
+        return `(${this.x}, ${this.y})`;
     }
 }
 export class HalfEdge {

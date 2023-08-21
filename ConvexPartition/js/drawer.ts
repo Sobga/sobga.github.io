@@ -15,7 +15,6 @@ export class PolygonDrawer{
 
     // Transforming values
     scale: number;
-    min_canvas_dim: number;
     offset: Point;
 
     constructor(polygons: Polygon[], canvas: HTMLCanvasElement, ctx : CanvasRenderingContext2D){
@@ -73,10 +72,17 @@ export class PolygonDrawer{
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Update drawing related constants
-        this.min_canvas_dim = Math.min(this.canvas.width, this.canvas.height);
-        this.scale = (this.min_canvas_dim - MARGIN) / Math.max(this.max_corner.x - this.min_corner.x, this.max_corner.y - this.min_corner.y);
-        this.offset.x = (this.canvas.width - this.min_canvas_dim)/2 + MARGIN/2;
-        this.offset.y = (this.canvas.height - this.min_canvas_dim)/2 + MARGIN/2;
+		const polygon_width = this.max_corner.x - this.min_corner.x;
+		const polygon_height = this.max_corner.y - this.min_corner.y;
+
+		const scale_x = (this.canvas.width - MARGIN) / polygon_width;
+		const scale_y = (this.canvas.height - MARGIN) / polygon_height;
+        this.scale = Math.min(scale_x, scale_y);
+		
+		const min_dim = Math.min(this.canvas.width, this.canvas.height);
+		// Offset in canvas space to center
+        this.offset.x = (this.canvas.width - min_dim)/2 + MARGIN/2;
+        this.offset.y = (this.canvas.height - min_dim)/2 + MARGIN/2;
 
         // Draw polygons
         for (var i = 0; i < this.polygons.length; i++){
