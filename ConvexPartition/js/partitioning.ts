@@ -1,5 +1,5 @@
-import { Point, Polygon, Vertex } from "./polygon.js";
-import { bbox, dist_sq, find_closest_intersection, is_reflex } from "./utils.js";
+import { Point, Polygon, Vertex } from "../../_Common/polygon.js";
+import { bbox, dist_sq, find_closest_intersection, is_reflex } from "../../_Common/utils.js";
 
 export abstract class Partitioner{
     abstract partition(polygon: Polygon): Polygon[];
@@ -49,7 +49,7 @@ export class BisectPartition extends Partitioner{
     partition(polygon: Polygon): Polygon[] {
         const b_box = bbox(polygon.boundary);
         const min_length = Math.sqrt(dist_sq(...b_box));
-        console.log("Hello");
+        
         // Find all reflex vertices
         const reflex_pairs = [];
         this.add_reflex_vertices(polygon.boundary, reflex_pairs);

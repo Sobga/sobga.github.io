@@ -1,31 +1,3 @@
-const CHUNK_SIZE = 16;
-const CHUNK_HALF = CHUNK_SIZE/2;
-
-const CHUNK_VERTS = [
-    vec4(0, 0, 1, 1),
-    vec4(0, 1, 1, 1),
-    vec4(1, 1, 1, 1),
-    vec4(1, 0, 1, 1),
-    vec4(0, 0, 0, 1),
-    vec4(0, 1, 0, 1),
-    vec4(1, 1, 0, 1),
-    vec4(1, 0, 0, 1)
-]
-
-function init_3d_array(dim){
-    const array = [];
-    for (var i = 0; i < dim + 1; i++){
-        array.push([]);
-        for (var j = 0; j < dim + 1; j++){
-            array[i].push([]);
-            for (var k = 0; k < dim + 1; k++){
-                array[i][j].push(1);
-            }
-        }
-    }
-    return array;
-}
-
 function get_chunk_positions(render_distance, offset){
     // Computes the chunks inside the render distance
     const positions = []
@@ -61,7 +33,7 @@ class ChunkGenerator extends Model{
         this.sampler = sampler;
         this.render_distance = render_distance;
         this.cube_length = 2*render_distance + 1;
-        
+        this.t_start = performance.now();
 
         // Number of vertices for chunk & total vertex count
         this.max_vertex_chunk = get_max_vertex(false) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
@@ -74,17 +46,17 @@ class ChunkGenerator extends Model{
         // Init vertex buffer
         const vertex_buffer = this.add_buffer(ATTRIBUTES.POSITION, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
 
         // Init normal buffer
         const normal_buffer = this.add_buffer(ATTRIBUTES.NORMAL, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, normal_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
 
         // Init color buffer
         const color_buffer = this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
 
         this.missing_indices = Array.from(Array(this.chunks.length).keys());    
         this.chunk_queue = get_chunk_positions(this.render_distance, vec3(0,0,0));
@@ -121,6 +93,8 @@ class ChunkGenerator extends Model{
     }
 
     start_generator(offset){
+        this.t_start = performance.now();
+
         // Clear from previous generation
         this.chunk_data_ready = false;
         this.chunk_queue = [];
@@ -157,8 +131,15 @@ class ChunkGenerator extends Model{
 
     update_chunks(){
         // Are we done generating?
-        if (this.missing_indices.length == 0)
+        if (this.missing_indices.length == 0){
+            if (this.t_start != null){
+                const t_end = performance.now();
+                console.log(`Generating chunks took ${t_end-this.t_start}ms`);
+                this.t_start = null;
+            }
             return;
+        }
+            
 
         // Find empty chunk
         const free_index = this.missing_indices.shift();    
@@ -201,7 +182,7 @@ class ChunkGenerator extends Model{
         const cube_points = [];
         const cube_levels = [];
         for (var i = 0; i < CHUNK_VERTS.length; i++){
-            cube_points.push(vec4(0,0,0,1));
+            cube_points.push([0,0,0,1]);
             cube_levels.push(1);
         }
 
@@ -243,8 +224,6 @@ class ChunkGenerator extends Model{
     }
 
     compute_chunk_data(chunk, n_vertices){
-        //const normals = vertices.map((x,_) => normalize(noise_sampler.deriv_norm(x)));
-        //const colors = vertices.map((vertex, _) => get_color(this.sampler.sample_1d(vertex[1] / 16)));
         for (var i = 0; i < n_vertices; i++){
             const vertex_start = 4 * i;
             const vertex_x = this.vertex_storage[vertex_start];
@@ -265,7 +244,7 @@ class ChunkGenerator extends Model{
 
     upload_chunk_data(chunk, n_vertices){
         // Compute index in buffer
-        const buffer_index = chunk.buffer_index * this.max_vertex_chunk * sizeof['vec4'];
+        const buffer_index = chunk.buffer_index * this.max_vertex_chunk * 4;
 
         // Push vertices
         //this.set_buffer_sub_data(ATTRIBUTES.POSITION, index, vertices);

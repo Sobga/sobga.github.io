@@ -1,13 +1,12 @@
+import { bst_tester } from "../../_Common/bbst.js";
 import { PolygonDrawer } from "../../_Common/drawer.js";
 import { load_polygon } from "../../_Common/loader.js";
-import { Point, Polygon } from "../../_Common/polygon.js";
-import { find_closest_intersection } from "../../_Common/utils.js";
-import {BisectPartition, Partitioner, SimplePartition} from "./partitioning.js";
+import { priority_queue_tester } from "../../_Common/priority_queue.js";
+import { Triangulator } from "./triangulation.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let polygon_drawer: PolygonDrawer;
-const partitioner: Partitioner = new BisectPartition();
 
 window.onresize = update_resolution;
 function update_resolution(){
@@ -25,14 +24,15 @@ window.onload = function init(){
     ctx = canvas.getContext("2d");
     polygon_drawer = new PolygonDrawer([], canvas, ctx);
     update_resolution();
-
-    load_polygon("test_polygon_01.instance.json").then(
+    
+    load_polygon("fpg-poly_0000000020_h2.instance.json", false).then(
         function(polygon) {
             polygon_drawer.set_polygons([polygon]);
             polygon_drawer.draw_polygons();
-
-            const polygons = partitioner.partition(polygon);
-            //const polygons = [polygon];
+            polygon.test_vertex_halfedge();
+            
+            new Triangulator().triangulate(polygon);
+            const polygons = polygon.polygons_from_cycles();
             polygon_drawer.set_polygons(polygons);
             polygon_drawer.draw_polygons();
         }

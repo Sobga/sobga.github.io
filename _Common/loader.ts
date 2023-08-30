@@ -23,7 +23,7 @@ export const http = <T>(request: RequestInfo): Promise<T> => {
   
   // Fetch the game-data JSON and use an interface to type it
   async function fetct_polygon_data(polygon_name: string) {
-    return http<PolygonData>('/ConvexPartition/instances/' + polygon_name);
+    return http<PolygonData>('/_Common/instances/' + polygon_name);
   }
   
 
@@ -36,10 +36,12 @@ function parse_vertex_list(input: {x:number, y:number}[]){
     return output;
 }
 
-export async function load_polygon(polygon_name: string): Promise<Polygon>{
+export async function load_polygon(polygon_name: string, ignore_holes = false): Promise<Polygon>{
     const polygon_data = await fetct_polygon_data(polygon_name);
     
     const outer_boundary = parse_vertex_list(polygon_data.outer_boundary);
+    if (ignore_holes)
+      return new Polygon(outer_boundary, []);
 
     // Go over each hole and add it
     const holes = [];

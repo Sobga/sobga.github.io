@@ -36,20 +36,27 @@ export class HalfEdge {
     destination() {
         return this.twin.origin;
     }
-    split_edge(p) {
+    /**
+     * Splits the half-edge by placing v on it. The new edges go from v->dest() and original are made to only go to origin->v.
+     * Assumes the half-edge is NOT an outer edge.
+     *
+     * @param v Vertex to split the edge with
+     * @returns Pair of created half-edges.
+     */
+    split_edge(v) {
         // Create new half-edges
-        const h = create_full_edge(p, this.destination());
+        const h = create_full_edge(v, this.destination());
         h[0].next = this.next;
         h[0].prev = this;
         h[1].next = this.twin;
         h[1].prev = this.twin.prev;
         // Add incident edge to new vertex
-        p.incident_edge = h[0];
+        v.incident_edge = h[0];
         // Update old half-edges
         this.next.prev = h[0];
         this.next = h[0];
-        this.twin.origin.incident_edge = h[1];
-        this.twin.origin = p;
+        //this.twin.origin.incident_edge = h[1];
+        this.twin.origin = v;
         this.twin.prev.next = h[1];
         this.twin.prev = h[1];
         return h;
@@ -66,7 +73,7 @@ export class HalfEdge {
 /**
  Creates and edge between u and v. Returns a pair of half-edges [h_0, h_1], where h_0 originates from u.
  */
-function create_full_edge(u, v) {
+export function create_full_edge(u, v) {
     const h_0 = new HalfEdge(u);
     const h_1 = new HalfEdge(v, h_0);
     h_0.twin = h_1;
@@ -88,7 +95,6 @@ function create_edges(vertices) {
         created_edges.push(h[0]);
         created_edges.push(h[1]);
         p.incident_edge = h[0];
-        q.incident_edge = h[1];
         // Connect to previous half-edges
         if (last_pair != null) {
             last_pair[0].next = h[0];
@@ -130,6 +136,16 @@ export class Polygon {
         out.y /= this.n;
         return out;
     }
+    /**
+     * Iterator to iterate over all vertices of the polygon.
+     */
+    *all_vertices() {
+        for (const v of this.boundary)
+            yield v;
+        for (const hole of this.holes)
+            for (const v of hole)
+                yield v;
+    }
     polygons_from_cycles() {
         const polygons = [];
         const seen_edges = new Set;
@@ -151,6 +167,9 @@ export class Polygon {
         return polygons;
     }
     split_edge(edge, v) {
+        // Is it an outer edge that we are splitting - if so, choose twin.
+        if (edge.origin.incident_edge != edge)
+            edge = edge.twin;
         const h = edge.split_edge(v);
         this.half_edges.push(h[0]);
         this.half_edges.push(h[1]);
@@ -207,6 +226,19 @@ export class Polygon {
             }
         }
         return max_edge;
+    }
+    test_vertex_halfedge() {
+        // Find all outer edges
+        const out_edge_set = new Set();
+        for (const outer_indicator of this.outer_cycle_indicators)
+            for (const edge of outer_indicator.next_iter())
+                out_edge_set.add(edge);
+        for (const v of this.all_vertices()) {
+            if (v.incident_edge == null)
+                throw new Error("Vertex has no incident edge");
+            if (out_edge_set.has(v.incident_edge))
+                throw new Error("Incident edge of vertex points to outside edge.");
+        }
     }
 }
 //# sourceMappingURL=polygon.js.map

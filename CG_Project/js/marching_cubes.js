@@ -45,8 +45,8 @@ const edgeTable =[
    0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
    0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0];
 
-const triTable  =
-   [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+const triTable  = [
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [1, 8, 3, 9, 8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -398,7 +398,7 @@ function VertexInterp(isolevel, p1, p2, val_p1, val_p2){
    var mu;
    
    
-   var p = vec4(p1[0], p1[1], p1[2], p1[3]);
+   var p = [p1[0], p1[1], p1[2], p1[3]];
    if (Math.abs(isolevel-val_p1) < EPSILON)
       return(p);
    if (Math.abs(isolevel-val_p2) < EPSILON){
@@ -418,5 +418,87 @@ function VertexInterp(isolevel, p1, p2, val_p1, val_p2){
    p[3] = 1.0;
    
    return(p);
- }
- 
+}
+
+function polygonise_all(levels, index_offset){
+   const vertices = [];
+   const indices = [];
+
+   
+   return [vertices, indices];
+}
+
+class MeshCache{
+    constructor(){
+        this.idx = null;
+        this.edges_intersected = [];
+    }
+}
+class ChunkMesher{
+    constructor(chunk_size){
+        this.chunk_size = chunk_size;
+        this.chunk_half = chunk_size/2;
+
+        // Prepare cache for meshes
+        this.prev_cube = new MeshCache();
+        this.prev_row = [];
+        this.prev_plane = [];
+        for (var i = 0; i < chunk_size; i++){
+            this.prev_row.push(new MeshCache());
+            const sub_row = [];
+            this.prev_plane.push(sub_row)
+            for (var j = 0; j < chunk_size; j++)
+                sub_row.push(new MeshCache());
+        }
+    }
+
+    mesh_chunk(levels, chunk, offset){
+        const vertices = [];
+        const indices = [];
+
+        // Offset for entire chunk
+        const offset_x = -this.chunk_half + chunk.pos[0] * this.chunk_size;
+        const offset_y = -this.chunk_half + chunk.pos[1] * this.chunk_size;
+        const offset_z = -this.chunk_half + chunk.pos[2] * this.chunk_size;
+
+        // Mesh each cube
+        for (var i = 0; i < CHUNK_SIZE; i++){
+            const x = i + offset_x;
+
+            for (var j = 0; j < CHUNK_SIZE; j++){
+                const y = j + offset_y;
+
+                for (var k = 0; k < CHUNK_SIZE; k++){
+                    const z = k + offset_z;
+                
+                    // Fetch computed levels
+                    for (var m = 0; m < CHUNK_VERTS.length; m++){
+                        const cube_offset = CHUNK_VERTS[m];
+                    
+                        cube_points[m][0] = x + cube_offset[0];
+                        cube_points[m][1] = y + cube_offset[1];
+                        cube_points[m][2] = z + cube_offset[2];
+                        
+                        cube_levels[m] = this.chunk_levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
+                    }
+
+                    // Vertices for a single cube
+                    var cube_vertices = Polygonise(cube_points, cube_levels, 0);
+         
+                    // Append new vertices
+                    for (var ii = 0; ii < cube_vertices.length; ii++){
+                        const vertex = cube_vertices[ii];
+                        for (var jj = 0; jj < 4; jj++){
+                            this.vertex_storage[4*vertex_count+jj] = vertex[jj];
+                        }
+                        vertex_count+=1;
+                    }
+                }
+            }
+        }
+    }
+
+    mesh_cube(cube_levels, cube_points){
+
+    }
+}

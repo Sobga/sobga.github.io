@@ -21,7 +21,7 @@ export const http = (request) => {
 // Fetch the game-data JSON and use an interface to type it
 function fetct_polygon_data(polygon_name) {
     return __awaiter(this, void 0, void 0, function* () {
-        return http('/ConvexPartition/instances/' + polygon_name);
+        return http('/_Common/instances/' + polygon_name);
     });
 }
 function parse_vertex_list(input) {
@@ -31,10 +31,12 @@ function parse_vertex_list(input) {
     }
     return output;
 }
-export function load_polygon(polygon_name) {
+export function load_polygon(polygon_name, ignore_holes = false) {
     return __awaiter(this, void 0, void 0, function* () {
         const polygon_data = yield fetct_polygon_data(polygon_name);
         const outer_boundary = parse_vertex_list(polygon_data.outer_boundary);
+        if (ignore_holes)
+            return new Polygon(outer_boundary, []);
         // Go over each hole and add it
         const holes = [];
         for (var i = 0; i < polygon_data.holes.length; i++) {

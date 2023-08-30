@@ -23,7 +23,7 @@ class Sampler{
         const dy = this.sample_xyz(pos[0], pos[1] + DERIV_STEP, pos[2]) - this.sample_xyz(pos[0], pos[1] - DERIV_STEP, pos[2]);
         const dz = this.sample_xyz(pos[0], pos[1], pos[2] + DERIV_STEP) - this.sample_xyz(pos[0], pos[1], pos[2] - DERIV_STEP);
 
-        return vec4(-dx, -dy, -dz, 0.0);
+        return [-dx, -dy, -dz, 0.0];
     }
 
     // Normalized derivative vector
@@ -33,7 +33,7 @@ class Sampler{
         const dz = this.sample_xyz(pos[0], pos[1], pos[2] + DERIV_STEP) - this.sample_xyz(pos[0], pos[1], pos[2] - DERIV_STEP);
 
         const length = Math.sqrt(dx*dx +dy*dy + dz*dz);
-        return vec4(-dx/length, -dy/length, -dz/length, 0.0);
+        return [-dx/length, -dy/length, -dz/length, 0.0];
     }
 
     deriv_norm_xyz(x,y,z){
@@ -42,7 +42,7 @@ class Sampler{
         const dz = this.sample_xyz(x, y, z + DERIV_STEP) - this.sample_xyz(x, y, z - DERIV_STEP);
 
         const length = Math.sqrt(dx*dx +dy*dy + dz*dz);
-        return vec4(-dx/length, -dy/length, -dz/length, 0.0);
+        return [-dx/length, -dy/length, -dz/length, 0.0];
     }
 }
 

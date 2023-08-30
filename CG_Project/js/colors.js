@@ -10,7 +10,7 @@ function get_color(x){
     const n_colors = COLORMAP.length - 1;
 
     // Blend between two closest colors in the colormap
-    const color = vec4(0,0,0,1);
+    const color = [0,0,0,1];
     const min_index = Math.floor(x * n_colors);
     const min_color = COLORMAP[min_index];
 

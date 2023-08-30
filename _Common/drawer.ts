@@ -123,7 +123,12 @@ export class PolygonDrawer{
         }
 
         // Draw points
-        this.ctx.font = "12px serif";
+        this.ctx.font = "10px serif";
+		this.ctx.strokeStyle = 'white';
+		this.ctx.fillStyle = 'black'
+		this.ctx.lineWidth = 4;
+		this.ctx.lineJoin="round";
+		this.ctx.miterLimit=2;
         this.draw_points(polygon.boundary);
         for (const hole of polygon.holes)
             this.draw_points(hole);
@@ -137,13 +142,12 @@ export class PolygonDrawer{
             const point = points[i];
             const center = this.transform_coords(point, transformed_p);
 
-            this.ctx.fillStyle = 'gray';
             this.ctx.beginPath();
             this.ctx.arc(center.x, center.y, POINT_SIZE, 0, 2*Math.PI);
             this.ctx.fill();
 
             if (this.polygons.length < 5){
-                this.ctx.fillStyle = 'black';
+				this.ctx.strokeText(`(${point.x}, ${point.y})`, center.x + 1, center.y + 1);
                 this.ctx.fillText(`(${point.x}, ${point.y})`, center.x + 1, center.y + 1);
             }
         }
@@ -151,7 +155,7 @@ export class PolygonDrawer{
 
     transform_coords(p: Point, out_loc:Point = null): Point{
         const x = (p.x - this.min_corner.x) * this.scale + this.offset.x;
-        const y = (p.y - this.min_corner.y) * this.scale + this.offset.y;
+        const y = (this,this.max_corner.y - p.y) * this.scale + this.offset.y;
         
         if (out_loc == null)
             out_loc = new Point(x,y)
