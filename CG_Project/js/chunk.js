@@ -46,17 +46,17 @@ class ChunkGenerator extends Model{
         // Init vertex buffer
         const vertex_buffer = this.add_buffer(ATTRIBUTES.POSITION, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.DYNAMIC_DRAW);
 
         // Init normal buffer
         const normal_buffer = this.add_buffer(ATTRIBUTES.NORMAL, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, normal_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.DYNAMIC_DRAW);
 
         // Init color buffer
         const color_buffer = this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
         gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, 4 * max_vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.DYNAMIC_DRAW);
 
         this.missing_indices = Array.from(Array(this.chunks.length).keys());    
         this.chunk_queue = get_chunk_positions(this.render_distance, vec3(0,0,0));
@@ -244,19 +244,18 @@ class ChunkGenerator extends Model{
 
     upload_chunk_data(chunk, n_vertices){
         // Compute index in buffer
-        const buffer_index = chunk.buffer_index * this.max_vertex_chunk * 4;
+        const vec4_size = sizeof['vec4'];
+        const n_attributes = sizeof['vec4'] * n_vertices;
+        const buffer_index = chunk.buffer_index * this.max_vertex_chunk * vec4_size;
 
         // Push vertices
-        //this.set_buffer_sub_data(ATTRIBUTES.POSITION, index, vertices);
-        this.set_buffer_sub_data_length(ATTRIBUTES.POSITION, buffer_index, this.vertex_storage, 4*n_vertices);
+        this.set_buffer_sub_data_length(ATTRIBUTES.POSITION, buffer_index, this.vertex_storage, n_attributes);
 
         // Push normals
-        //this.set_buffer_sub_data(ATTRIBUTES.NORMAL, index * sizeof['vec4'], normals);
-        this.set_buffer_sub_data_length(ATTRIBUTES.NORMAL, buffer_index, this.normal_storage, 4*n_vertices);
+        this.set_buffer_sub_data_length(ATTRIBUTES.NORMAL, buffer_index, this.normal_storage, n_attributes);
         
         // Push colors
-        //this.set_buffer_sub_data(ATTRIBUTES.COLOR, index * sizeof['vec4'], colors);
-        this.set_buffer_sub_data_length(ATTRIBUTES.COLOR, buffer_index, this.color_storage, 4*n_vertices);
+        this.set_buffer_sub_data_length(ATTRIBUTES.COLOR, buffer_index, this.color_storage, n_attributes);
         chunk.n_vertices = n_vertices;
     }
 

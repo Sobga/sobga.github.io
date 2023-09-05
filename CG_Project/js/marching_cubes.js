@@ -430,10 +430,11 @@ function polygonise_all(levels, index_offset){
 
 class MeshCache{
     constructor(){
-        this.idx = null;
-        this.edges_intersected = [];
+        this.cube_idx = null;
+        this.edge_indices = [];
     }
 }
+
 class ChunkMesher{
     constructor(chunk_size){
         this.chunk_size = chunk_size;

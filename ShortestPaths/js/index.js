@@ -18,7 +18,7 @@ window.onload = function init() {
     ctx = canvas.getContext("2d");
     polygon_drawer = new PolygonDrawer([], canvas, ctx);
     update_resolution();
-    load_polygon("fpg-poly_0000000020_h2.instance.json", false).then(function (polygon) {
+    load_polygon("fpg-poly_0000000020_h1.instance.json", false).then(function (polygon) {
         polygon_drawer.set_polygons([polygon]);
         polygon_drawer.draw_polygons();
         polygon.test_vertex_halfedge();
