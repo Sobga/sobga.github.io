@@ -34,6 +34,7 @@ class ChunkGenerator extends Model{
         this.render_distance = render_distance;
         this.cube_length = 2*render_distance + 1;
         this.t_start = performance.now();
+        this.mesher = new ChunkMesher(CHUNK_SIZE);
 
         // Number of vertices for chunk & total vertex count
         this.max_vertex_chunk = get_max_vertex(false) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
@@ -174,7 +175,23 @@ class ChunkGenerator extends Model{
     }
 
     generate_vertices(chunk){
-        var vertex_count = 0;
+        const buffer_offset = chunk.buffer_index * this.max_vertex_chunk;
+        const data = this.mesher.mesh_chunk(this.chunk_levels, chunk, buffer_offset);
+        const vertices = data[0];
+        const indices = data[1];
+
+        for (var i = 0; i < indices.length; i++){
+            const vertex = vertices[indices[i] - buffer_offset];
+            const storage_offset = 4*i;
+            this.vertex_storage[storage_offset]   = vertex[0];
+            this.vertex_storage[storage_offset+1] = vertex[1];
+            this.vertex_storage[storage_offset+2] = vertex[2];
+            this.vertex_storage[storage_offset+3] = vertex[3];
+        }
+
+        console.log(`Indexing saved: ${100*(1 - vertices.length/indices.length)>>>0}% vertices.`);
+        return indices.length;
+        /*var vertex_count = 0;
         const offset_x = -CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE;
         const offset_y = -CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
         const offset_z = -CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
@@ -220,7 +237,7 @@ class ChunkGenerator extends Model{
                 }
             }
         }
-        return vertex_count;
+        return vertex_count;*/
     }
 
     compute_chunk_data(chunk, n_vertices){

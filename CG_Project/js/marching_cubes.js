@@ -303,6 +303,21 @@ const triTable  = [
    [0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]];
  
+const endpoint_table = [
+    [0,1],
+    [1,2],
+    [2,3],
+    [0,3],
+    [4,5],
+    [5,6],
+    [6,7],
+    [4,7],
+    [0,4],
+    [1,5],
+    [2,6],
+    [3,7]
+];
+
 // http://paulbourke.net/geometry/polygonise/polygonise1.gif
 function Polygonise(points, levels, isolevel){
    var vertlist = [];
@@ -328,40 +343,40 @@ function Polygonise(points, levels, isolevel){
    /* Find the vertices where the surface intersects the cube */
    if (edgeTable[cubeindex] & 1)
 	  vertlist[0] =
-		 VertexInterp(isolevel,points[0],points[1],levels[0],levels[1]);
+		 vertex_interp(isolevel,points[0],points[1],levels[0],levels[1]);
    if (edgeTable[cubeindex] & 2)
 	  vertlist[1] =
-		 VertexInterp(isolevel,points[1],points[2],levels[1],levels[2]);
+		 vertex_interp(isolevel,points[1],points[2],levels[1],levels[2]);
    if (edgeTable[cubeindex] & 4)
 	  vertlist[2] =
-		 VertexInterp(isolevel,points[2],points[3],levels[2],levels[3]);
+		 vertex_interp(isolevel,points[2],points[3],levels[2],levels[3]);
    if (edgeTable[cubeindex] & 8)
 	  vertlist[3] =
-		 VertexInterp(isolevel,points[3],points[0],levels[3],levels[0]);
+		 vertex_interp(isolevel,points[3],points[0],levels[3],levels[0]);
    if (edgeTable[cubeindex] & 16)
 	  vertlist[4] =
-		 VertexInterp(isolevel,points[4],points[5],levels[4],levels[5]);
+		 vertex_interp(isolevel,points[4],points[5],levels[4],levels[5]);
    if (edgeTable[cubeindex] & 32)
 	  vertlist[5] =
-		 VertexInterp(isolevel,points[5],points[6],levels[5],levels[6]);
+		 vertex_interp(isolevel,points[5],points[6],levels[5],levels[6]);
    if (edgeTable[cubeindex] & 64)
 	  vertlist[6] =
-		 VertexInterp(isolevel,points[6],points[7],levels[6],levels[7]);
+		 vertex_interp(isolevel,points[6],points[7],levels[6],levels[7]);
    if (edgeTable[cubeindex] & 128)
 	  vertlist[7] =
-		 VertexInterp(isolevel,points[7],points[4],levels[7],levels[4]);
+		 vertex_interp(isolevel,points[7],points[4],levels[7],levels[4]);
    if (edgeTable[cubeindex] & 256)
 	  vertlist[8] =
-		 VertexInterp(isolevel,points[0],points[4],levels[0],levels[4]);
+		 vertex_interp(isolevel,points[0],points[4],levels[0],levels[4]);
    if (edgeTable[cubeindex] & 512)
 	  vertlist[9] =
-		 VertexInterp(isolevel,points[1],points[5],levels[1],levels[5]);
+		 vertex_interp(isolevel,points[1],points[5],levels[1],levels[5]);
    if (edgeTable[cubeindex] & 1024)
 	  vertlist[10] =
-		 VertexInterp(isolevel,points[2],points[6],levels[2],levels[6]);
+		 vertex_interp(isolevel,points[2],points[6],levels[2],levels[6]);
    if (edgeTable[cubeindex] & 2048)
 	  vertlist[11] =
-		 VertexInterp(isolevel,points[3],points[7],levels[3],levels[7]);
+		 vertex_interp(isolevel,points[3],points[7],levels[3],levels[7]);
  
    /* Create the triangle */
    var vertices = [];
@@ -394,39 +409,60 @@ function get_max_vertex(do_indexing){
 	Linearly interpolate the position where an isosurface cuts
 	an edge between two vertices, each with their own scalar value
  */
-function VertexInterp(isolevel, p1, p2, val_p1, val_p2){
-   var mu;
-   
-   
+function vertex_interp(isolevel, p1, p2, val_p1, val_p2){   
    var p = [p1[0], p1[1], p1[2], p1[3]];
    if (Math.abs(isolevel-val_p1) < EPSILON)
-      return(p);
+      return p;
+
    if (Math.abs(isolevel-val_p2) < EPSILON){
       p[0] = p2[0];
       p[1] = p2[1];
       p[2] = p2[2];
       p[3] = p2[3];
-      return(p);
+      return p;
    }
    if (Math.abs(val_p1-val_p2) < EPSILON)
-      return(p);
-   mu = (isolevel - val_p1) / (val_p2 - val_p1);
+      return p;
+   const mu = (isolevel - val_p1) / (val_p2 - val_p1);
    
    p[0] = p1[0] + mu * (p2[0] - p1[0]);
    p[1] = p1[1] + mu * (p2[1] - p1[1]);
    p[2] = p1[2] + mu * (p2[2] - p1[2]);
    p[3] = 1.0;
    
-   return(p);
+   return p;
 }
 
-function polygonise_all(levels, index_offset){
-   const vertices = [];
-   const indices = [];
+ /*
+	Linearly interpolate the position where an isosurface (level 0) cuts
+	an edge between two vertices, each with their own scalar value
+ */
+function vertex_interp_zero(p1, p2, val_p1, val_p2){   
+    var p = [p1[0], p1[1], p1[2], 1.0];
 
-   
-   return [vertices, indices];
-}
+    // Are we close to either end of the edge?
+    if (Math.abs(val_p1) < EPSILON)
+       return p;
+    if (Math.abs(val_p2) < EPSILON){
+       p[0] = p2[0];
+       p[1] = p2[1];
+       p[2] = p2[2];
+       return p;
+    }
+
+    // TODO: Should vertex be between p1 and p2?
+    const d_val = val_p2 - val_p1;
+    if (Math.abs(val_p1-val_p2) < EPSILON)
+       throw new Error("");
+
+    // Interpolate 
+    const mu = -val_p1 / d_val;
+    p[0] = p1[0] + mu * (p2[0] - p1[0]);
+    p[1] = p1[1] + mu * (p2[1] - p1[1]);
+    p[2] = p1[2] + mu * (p2[2] - p1[2]);
+    
+    return(p);
+ }
 
 class MeshCache{
     constructor(){
@@ -439,6 +475,11 @@ class ChunkMesher{
     constructor(chunk_size){
         this.chunk_size = chunk_size;
         this.chunk_half = chunk_size/2;
+        this.chunk_offset = [-1, -1, -1];
+        this.buffer_offset = -1;
+        this.vertices = [];
+        this.indices = [];
+        this.chunk = null;
 
         // Prepare cache for meshes
         this.prev_cube = new MeshCache();
@@ -453,53 +494,119 @@ class ChunkMesher{
         }
     }
 
-    mesh_chunk(levels, chunk, offset){
-        const vertices = [];
-        const indices = [];
+    mesh_chunk(levels, chunk, buffer_offset){
+        this.buffer_offset = buffer_offset;
+        this.chunk = chunk;
 
         // Offset for entire chunk
-        const offset_x = -this.chunk_half + chunk.pos[0] * this.chunk_size;
-        const offset_y = -this.chunk_half + chunk.pos[1] * this.chunk_size;
-        const offset_z = -this.chunk_half + chunk.pos[2] * this.chunk_size;
+        this.chunk_offset[0] = -this.chunk_half + this.chunk.pos[0] * this.chunk_size;
+        this.chunk_offset[1] = -this.chunk_half + this.chunk.pos[1] * this.chunk_size;
+        this.chunk_offset[2] = -this.chunk_half + this.chunk.pos[2] * this.chunk_size;
+
+        // Values for specific cube to mesh
+        const cube_levels = [];
+        for (var i = 0; i < CHUNK_VERTS.length; i++){
+            cube_levels.push(1);
+        }
 
         // Mesh each cube
         for (var i = 0; i < CHUNK_SIZE; i++){
-            const x = i + offset_x;
-
             for (var j = 0; j < CHUNK_SIZE; j++){
-                const y = j + offset_y;
-
                 for (var k = 0; k < CHUNK_SIZE; k++){
-                    const z = k + offset_z;
-                
-                    // Fetch computed levels
+
+                    // Fetch computed levels for current cube
                     for (var m = 0; m < CHUNK_VERTS.length; m++){
                         const cube_offset = CHUNK_VERTS[m];
-                    
-                        cube_points[m][0] = x + cube_offset[0];
-                        cube_points[m][1] = y + cube_offset[1];
-                        cube_points[m][2] = z + cube_offset[2];
-                        
-                        cube_levels[m] = this.chunk_levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
+                        cube_levels[m] = levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
                     }
 
                     // Vertices for a single cube
-                    var cube_vertices = Polygonise(cube_points, cube_levels, 0);
-         
-                    // Append new vertices
-                    for (var ii = 0; ii < cube_vertices.length; ii++){
-                        const vertex = cube_vertices[ii];
-                        for (var jj = 0; jj < 4; jj++){
-                            this.vertex_storage[4*vertex_count+jj] = vertex[jj];
-                        }
-                        vertex_count+=1;
-                    }
+                    this.mesh_cube(cube_levels, i, j ,k);
                 }
             }
         }
+        // Clear vertex and index storage
+        const ret = [this.vertices, this.indices]
+        this.vertices = [];
+        this.indices = [];
+        return ret;
     }
 
-    mesh_cube(cube_levels, cube_points){
+    /**
+     * Meshes a single 1x1x1 cube
+     */
+    mesh_cube(cube_levels, i, j, k){
+        const cube_index = compute_cube_index(cube_levels);
+        const edges = edgeTable[cube_index];
+        const vertex_indices = [];
 
+        // Cube is entirely in/out of the surface
+        if (edges == 0)
+            return;
+
+        // Find the vertices where the surface intersects the cube
+        var mask = 1;
+        for (var m = 0; m < endpoint_table.length; m++){
+            if (edges & mask)
+                vertex_indices[m] = this.create_or_lookup_vertex(cube_levels, m, i, j, k)
+            mask <<=1;
+        }
+
+        // Create triangles based on the vertices created
+        for (var i=0; triTable[cube_index][i] !=-1; i+=3) {
+            var v_1 = vertex_indices[triTable[cube_index][i]];
+            var v_2 = vertex_indices[triTable[cube_index][i + 1]];
+            var v_3 = vertex_indices[triTable[cube_index][i + 2]];
+        
+            this.indices.push(v_1);
+            this.indices.push(v_2);
+            this.indices.push(v_3);
+        }
+        // TODO:
+        // Cache results for next iteration 
     }
+
+    create_or_lookup_vertex(cube_levels, edge_id, i, j, k){
+        // Has the vertex been created previously?
+        const lookup_id = this.lookup_vertex(edge_id, i, j, k);
+        if (lookup_id != -1)
+            return lookup_id;
+
+        // Otherwise, compute and add the new vertex
+        const endpoints = endpoint_table[edge_id];
+        const p = this.create_offset_point(endpoints[0], i, j, k);
+        const q = this.create_offset_point(endpoints[1], i, j, k);
+        const v = vertex_interp_zero(p, q, cube_levels[endpoints[0]], cube_levels[endpoints[1]]);
+        this.vertices.push(v);
+
+        return this.vertices.length + this.buffer_offset - 1;
+    }
+
+    lookup_vertex(edge_id, i, j, k){
+        return -1;
+    }
+
+    create_offset_point(corner_id, i, j, k){
+        const corner_offsets = CHUNK_VERTS[corner_id];
+        return [
+            this.chunk_offset[0] + corner_offsets[0] + i,
+            this.chunk_offset[1] + corner_offsets[1] + j,
+            this.chunk_offset[2] + corner_offsets[2] + k,
+        ];
+    }
+}
+
+function compute_cube_index(levels){
+    /*
+	   Determine the index into the edge table which
+	   tells us which vertices are inside of the surface
+	*/
+    var cube_index = 0;
+    var mask = 1;
+    for (var i = 0; i < CHUNK_VERTS.length; i++){
+        if (levels[i] < 0)
+            cube_index |= mask;
+        mask <<= 1;
+    }
+    return cube_index;
 }
