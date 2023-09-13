@@ -36,13 +36,22 @@ class Sampler{
         return [-dx/length, -dy/length, -dz/length, 0.0];
     }
 
-    deriv_norm_xyz(x,y,z){
+    deriv_norm4_xyz(x,y,z){
         const dx = this.sample_xyz(x + DERIV_STEP, y, z) - this.sample_xyz(x - DERIV_STEP, y, z);
         const dy = this.sample_xyz(x, y + DERIV_STEP, z) - this.sample_xyz(x, y - DERIV_STEP, z);
         const dz = this.sample_xyz(x, y, z + DERIV_STEP) - this.sample_xyz(x, y, z - DERIV_STEP);
 
         const length = Math.sqrt(dx*dx +dy*dy + dz*dz);
         return [-dx/length, -dy/length, -dz/length, 0.0];
+    }
+
+    deriv_norm3_xyz(x, y, z){
+        const dx = this.sample_xyz(x + DERIV_STEP, y, z) - this.sample_xyz(x - DERIV_STEP, y, z);
+        const dy = this.sample_xyz(x, y + DERIV_STEP, z) - this.sample_xyz(x, y - DERIV_STEP, z);
+        const dz = this.sample_xyz(x, y, z + DERIV_STEP) - this.sample_xyz(x, y, z - DERIV_STEP);
+
+        const length = Math.sqrt(dx*dx +dy*dy + dz*dz);
+        return [-dx/length, -dy/length, -dz/length];
     }
 }
 

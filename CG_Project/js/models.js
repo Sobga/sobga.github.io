@@ -3,45 +3,59 @@ const MODEL_PATH = "./Models/"
 
 class ModelMaterial{
     constructor(k_d, k_s, s){
-        this.k_d = k_d; // Diffuse reflection
-        this.k_s = k_s; // Specular reflection 
-        this.s = s; // Phong exponent
+        this.k_d = k_d;     // Diffuse reflection
+        this.k_s = k_s;     // Specular reflection 
+        this.s = s;         // Phong exponent
     }
 }
 
 class Model{
-    constructor(gl, material){
+    constructor(gl, material, indexed = false){
         this.gl = gl;
         this.transform = mat4();
         this.pos = vec3();
         this.buffers = new Map();
 
+        // Create VAO and add required buffers
+        this.vao = gl.createVertexArray();
+        gl.bindVertexArray(this.vao);
+        this.add_buffer(ATTRIBUTES.POSITION, 3, gl.FLOAT);
+        this.add_buffer(ATTRIBUTES.NORMAL, 3, gl.FLOAT);
+        this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
+        if (indexed)
+            this.add_buffer(ATTRIBUTES.INDEX, 1, gl.INT, true);
+
         // Create default material
-        if (material == undefined)
+        if (material == undefined || material == null)
             this.material = new ModelMaterial(0.8, 0.2, 5);
         else
             this.material = material;
     }
 
-    add_buffer(buffer_id, size, type){
+    add_buffer(attribute, size, type, indexed = false){
         const buffer = this.gl.createBuffer();
-        if (!buffer)
+        if (!buffer || buffer == -1)
             throw "Failed to create buffer object";
         
-            // Initialize and remember buffer
+
+        if (indexed){
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
+        } else{
+            const attribute_location = get_attribute_location(attribute);
+            this.gl.enableVertexAttribArray(attribute_location);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+            this.gl.vertexAttribPointer(attribute_location, size, type, false, 0, 0);
+        }
+        // Initialize and remember buffer
         buffer.type = type;
         buffer.size = size;
-        this.buffers.set(buffer_id, buffer);
+        buffer.is_indexed = indexed;
+        this.buffers.set(attribute, buffer);
 
         return buffer;
     }
 
-    add_filled_buffer(buffer_id, size, type, data){
-        const buffer = this.add_buffer(buffer_id, size, type);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, flatten(data), gl.STATIC_DRAW);
-        return buffer;
-    }
+
 
     set_buffer_data(buffer_id, data, is_element_array){
         const buffer = this.get_buffer(buffer_id)
@@ -88,24 +102,21 @@ class Model{
     draw(){}
 
     draw_model(shader){
+        this.gl.bindVertexArray(this.vao);
+        // Upload uniforms
         shader.apply_shader(this);
         shader.set_uniform_value(UNIFORMS.MODEL_MATRIX, this.transform);
 
-        // Upload uniforms
         this.draw();
+        this.gl.bindVertexArray(null);
     }
 }
 
 class ModelMesh extends Model{
     constructor(gl, model_name){
-        super(gl);
+        super(gl, null, true);
         this.obj_doc = null;
         this.n_vertices = -1;
-
-        this.add_buffer(ATTRIBUTES.POSITION, 3, gl.FLOAT);
-        this.add_buffer(ATTRIBUTES.NORMAL, 3, gl.FLOAT);
-        this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
-        this.add_buffer(ATTRIBUTES.INDEX, 1, gl.INT);
 
         readOBJFile(MODEL_PATH + model_name, gl, this, 1, false);
     }
@@ -118,7 +129,6 @@ class ModelMesh extends Model{
         if (this.n_vertices < 0)
             return;
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.get_buffer(ATTRIBUTES.INDEX));
         gl.drawElements(gl.TRIANGLES, this.n_vertices, gl.UNSIGNED_SHORT, 0);
     }
 }
@@ -191,9 +201,6 @@ class SubmarinePropeller extends ModelMesh{
     }
 
     set_model_transform(dir, q_rot, transform){
-        //this.axis.make_rot_angle_axis(this.angle, dir);
-        //const local_z_axis = q_rot.apply(MODEL_FWD)
-        
         this.transform = mult(transform, rotateZ(-180 * this.angle/ Math.PI));
     }
 

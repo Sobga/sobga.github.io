@@ -3,6 +3,22 @@ const ATTRIBUTES = {
     POSITION: "a_position",
     NORMAL: "a_normal",
     COLOR: "a_color"
+};
+
+const ATTRIBUTE_LOCATION = {
+    POSITION : 0,
+    NORMAL: 1,
+    COLOR: 2
+};
+
+function get_attribute_location(attribute){
+    switch (attribute){
+        case ATTRIBUTES.POSITION: return ATTRIBUTE_LOCATION.POSITION;
+        case ATTRIBUTES.NORMAL: return ATTRIBUTE_LOCATION.NORMAL;
+        case ATTRIBUTES.COLOR: return ATTRIBUTE_LOCATION.COLOR;
+
+        default: throw new Error("Undefined attribute");
+    }
 }
 
 const UNIFORMS = {
@@ -228,7 +244,6 @@ class ModelShader extends Shader{
             //this.set_uniform_value(UNIFORMS.LIGHT_MATRIX + "_" + i, );
         }
         
-        
         // Upload uniforms
         this.set_uniform_value(UNIFORMS.LIGHT_POSITIONS, light_positions);
         this.set_uniform_value(UNIFORMS.LIGHT_DIRECTIONS, light_dirs);
@@ -239,7 +254,7 @@ class ModelShader extends Shader{
 
     apply_shader(model){
         //super(model);
-        for (let a of this.attributes.entries()){
+        /*for (let a of this.attributes.entries()){
             const attribute_id = a[0];
             const attribute = a[1];
 
@@ -247,8 +262,7 @@ class ModelShader extends Shader{
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
             this.gl.vertexAttribPointer(attribute, buffer.size, buffer.type, false, 0, 0);
             this.gl.enableVertexAttribArray(attribute);
-        }
-
+        }*/
 
         // Handle material properties of object
         this.set_uniform_value(UNIFORMS.MATERIAL_DIFFUSE, model.material.k_d);

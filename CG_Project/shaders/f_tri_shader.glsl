@@ -115,19 +115,13 @@ float depthfog(){
 void main(){
     vec4 normal = normalize(v_normal);
     
+	// Compute light contribution from spotlights
 	vec4 light_color = vec4(0);
 	for (int i = 0; i < N_LIGHTS; i++){
 		vec4 lightness = spotlight(normal, light_emissions[i], light_dirs[i], light_positions[i]);
 		float visibility = pcf(i, v_position_in_lights[i]);
 		light_color += lightness * visibility;
 	}
-	// Compute light contribution from one spotlight
-	//vec4 lightness_0 = spotlight(normal, light_emissions[0], light_dirs[0], light_positions[0]);
-	//float visibility_0 = pcf(shadow_maps[0], v_position_in_lights[0]);
-
-	// Compute light from other spotlight
-	//vec4 lightness_1 = spotlight(normal, light_emissions[1], light_dirs[1], light_positions[1]);
-	//float visibility_1 = pcf(shadow_maps[1], v_position_in_lights[1]);
 
 	// Pure viewcolor
 	vec4 view_color = vec4(0);

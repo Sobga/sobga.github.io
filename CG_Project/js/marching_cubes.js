@@ -445,7 +445,7 @@ function vertex_interp(isolevel, p1, p2, val_p1, val_p2){
 	an edge between two vertices, each with their own scalar value
  */
 function vertex_interp_zero(p1, p2, val_p1, val_p2){   
-    var p = [p1[0], p1[1], p1[2], 1.0];
+    var p = [p1[0], p1[1], p1[2]];
 
     // Are we close to either end of the edge?
     if (Math.abs(val_p1) < EPSILON)
