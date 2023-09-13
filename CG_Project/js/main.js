@@ -87,9 +87,8 @@ window.onload = function init(){
 
     // Create submarine
     //sub_cam = new SubmarineCam(gl, lightManager, vec3(0, -16, -8), vec4(-1,0,0,0));
-    //sub_cam = new SubmarineCam(gl, vec3(-4, 0.5, 0), vec4(0,0,1,0));
-    //sub_cam = new SubmarineCam(gl, vec3(-7, 0.5,-9), vec4(0,0,1,0));
     sub_cam = new SubmarineCam(gl, lightManager, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
+    //sub_cam = new SubmarineCam(gl, lightManager, vec3(-4, 0, 0), vec4(1, 0, 0,0));
     cameras.push(sub_cam);
     sub_cam.set_active(true);
     camera_index = cameras.length - 1; // Set camera index to be submarine camera
@@ -146,7 +145,8 @@ function render(timestamp){
     
     /* MODELS DRAW */
     // Set background color
-    gl.clearColor(BG_COLOR[0], BG_COLOR[1], BG_COLOR[2], BG_COLOR[3]); 
+    gl.clearColor(BG_COLOR[0], BG_COLOR[1], BG_COLOR[2], BG_COLOR[3]);
+    
     // Draw models
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.model_shader.use_shader()

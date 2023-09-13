@@ -11,7 +11,7 @@
  */
 
 const EPSILON = 0.000001
-const edgeTable =[
+const edge_table =[
    0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
    0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
    0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -45,7 +45,7 @@ const edgeTable =[
    0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
    0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0];
 
-const triTable  = [
+const tri_table  = [
    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
    [0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -318,6 +318,13 @@ const endpoint_table = [
     [3,7]
 ];
 
+const PREV_CUBE_MASK = 2440;
+const PREV_ROW_MASK = 15;
+const PREV_PLANE_MASK = 785;
+const PREV_CUBE_TRANSLATION =   [-1, -1, -1, 1, -1, -1, -1, 5, 9, -1, -1, 10];
+const PREV_ROW_TRANSLATION =    [4, 5, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1];
+const PREV_PLANE_TRANSLATION =  [2, -1, -1, -1, 6, -1, -1, -1, 11, 10, -1, -1];
+
 // http://paulbourke.net/geometry/polygonise/polygonise1.gif
 function Polygonise(points, levels, isolevel){
    var vertlist = [];
@@ -337,53 +344,53 @@ function Polygonise(points, levels, isolevel){
    if (levels[7] < isolevel) cubeindex |= 128;
  
    /* Cube is entirely in/out of the surface */
-   if (edgeTable[cubeindex] == 0)
+   if (edge_table[cubeindex] == 0)
 	  return [];
  
    /* Find the vertices where the surface intersects the cube */
-   if (edgeTable[cubeindex] & 1)
+   if (edge_table[cubeindex] & 1)
 	  vertlist[0] =
 		 vertex_interp(isolevel,points[0],points[1],levels[0],levels[1]);
-   if (edgeTable[cubeindex] & 2)
+   if (edge_table[cubeindex] & 2)
 	  vertlist[1] =
 		 vertex_interp(isolevel,points[1],points[2],levels[1],levels[2]);
-   if (edgeTable[cubeindex] & 4)
+   if (edge_table[cubeindex] & 4)
 	  vertlist[2] =
 		 vertex_interp(isolevel,points[2],points[3],levels[2],levels[3]);
-   if (edgeTable[cubeindex] & 8)
+   if (edge_table[cubeindex] & 8)
 	  vertlist[3] =
 		 vertex_interp(isolevel,points[3],points[0],levels[3],levels[0]);
-   if (edgeTable[cubeindex] & 16)
+   if (edge_table[cubeindex] & 16)
 	  vertlist[4] =
 		 vertex_interp(isolevel,points[4],points[5],levels[4],levels[5]);
-   if (edgeTable[cubeindex] & 32)
+   if (edge_table[cubeindex] & 32)
 	  vertlist[5] =
 		 vertex_interp(isolevel,points[5],points[6],levels[5],levels[6]);
-   if (edgeTable[cubeindex] & 64)
+   if (edge_table[cubeindex] & 64)
 	  vertlist[6] =
 		 vertex_interp(isolevel,points[6],points[7],levels[6],levels[7]);
-   if (edgeTable[cubeindex] & 128)
+   if (edge_table[cubeindex] & 128)
 	  vertlist[7] =
 		 vertex_interp(isolevel,points[7],points[4],levels[7],levels[4]);
-   if (edgeTable[cubeindex] & 256)
+   if (edge_table[cubeindex] & 256)
 	  vertlist[8] =
 		 vertex_interp(isolevel,points[0],points[4],levels[0],levels[4]);
-   if (edgeTable[cubeindex] & 512)
+   if (edge_table[cubeindex] & 512)
 	  vertlist[9] =
 		 vertex_interp(isolevel,points[1],points[5],levels[1],levels[5]);
-   if (edgeTable[cubeindex] & 1024)
+   if (edge_table[cubeindex] & 1024)
 	  vertlist[10] =
 		 vertex_interp(isolevel,points[2],points[6],levels[2],levels[6]);
-   if (edgeTable[cubeindex] & 2048)
+   if (edge_table[cubeindex] & 2048)
 	  vertlist[11] =
 		 vertex_interp(isolevel,points[3],points[7],levels[3],levels[7]);
  
    /* Create the triangle */
    var vertices = [];
-   for (var i=0; triTable[cubeindex][i] !=-1; i+=3) {
-	  var v_1 = vertlist[triTable[cubeindex][i]];
-	  var v_2 = vertlist[triTable[cubeindex][i + 1]];
-	  var v_3 = vertlist[triTable[cubeindex][i + 2]];
+   for (var i=0; tri_table[cubeindex][i] !=-1; i+=3) {
+	  var v_1 = vertlist[tri_table[cubeindex][i]];
+	  var v_2 = vertlist[tri_table[cubeindex][i + 1]];
+	  var v_3 = vertlist[tri_table[cubeindex][i + 2]];
 
 	  vertices.push(v_1);
 	  vertices.push(v_2);
@@ -399,8 +406,8 @@ function get_max_vertex(do_indexing){
 		return 15;
 
 	var max_verts = 0;
-	for (var i = 0; i < triTable.length; i++){
-		max_verts = Math.max(max_verts, new Set(triTable[i]).size - 1);
+	for (var i = 0; i < tri_table.length; i++){
+		max_verts = Math.max(max_verts, new Set(tri_table[i]).size - 1);
 	}
 	
 	return max_verts;
@@ -466,8 +473,8 @@ function vertex_interp_zero(p1, p2, val_p1, val_p2){
 
 class MeshCache{
     constructor(){
-        this.cube_idx = null;
-        this.edge_indices = [];
+        this.cube_idx = 0;
+        this.vertex_indices = [];
     }
 }
 
@@ -537,7 +544,7 @@ class ChunkMesher{
      */
     mesh_cube(cube_levels, i, j, k){
         const cube_index = compute_cube_index(cube_levels);
-        const edges = edgeTable[cube_index];
+        const edges = edge_table[cube_index];
         const vertex_indices = [];
 
         // Cube is entirely in/out of the surface
@@ -553,24 +560,39 @@ class ChunkMesher{
         }
 
         // Create triangles based on the vertices created
-        for (var i=0; triTable[cube_index][i] !=-1; i+=3) {
-            var v_1 = vertex_indices[triTable[cube_index][i]];
-            var v_2 = vertex_indices[triTable[cube_index][i + 1]];
-            var v_3 = vertex_indices[triTable[cube_index][i + 2]];
+        for (var i=0; tri_table[cube_index][i] !=-1; i+=3) {
+            var v_1 = vertex_indices[tri_table[cube_index][i]];
+            var v_2 = vertex_indices[tri_table[cube_index][i + 1]];
+            var v_3 = vertex_indices[tri_table[cube_index][i + 2]];
         
             this.indices.push(v_1);
             this.indices.push(v_2);
             this.indices.push(v_3);
         }
         // TODO:
-        // Cache results for next iteration 
+        // Cache results for next iteration
+        this.prev_cube.cube_idx = cube_index;
+        this.prev_cube.vertex_indices = vertex_indices;
+
+        // Update previous row
+        this.prev_row[k].cube_idx = cube_index;
+        this.prev_row[k].vertex_indices = vertex_indices;
+        
+        // Update previous plane
+        const prev_plane_cube = this.prev_plane[j][k];
+        prev_plane_cube.cube_idx = cube_index;
+        prev_plane_cube.vertex_indices = vertex_indices;
     }
 
     create_or_lookup_vertex(cube_levels, edge_id, i, j, k){
         // Has the vertex been created previously?
         const lookup_id = this.lookup_vertex(edge_id, i, j, k);
-        if (lookup_id != -1)
+        if (lookup_id != -1){
+            if (lookup_id == undefined)
+                throw new Error("Undefined edge");
             return lookup_id;
+        }
+            
 
         // Otherwise, compute and add the new vertex
         const endpoints = endpoint_table[edge_id];
@@ -583,6 +605,21 @@ class ChunkMesher{
     }
 
     lookup_vertex(edge_id, i, j, k){
+        const edge_mask = 1 << edge_id;
+        var idx_ok = k > 0;
+        if (edge_mask & PREV_CUBE_MASK && idx_ok){
+            return this.prev_cube.vertex_indices[PREV_CUBE_TRANSLATION[edge_id]];
+        }
+
+        idx_ok &&= j > 0;
+        if (edge_mask & PREV_ROW_MASK && idx_ok){
+            return this.prev_row[k].vertex_indices[PREV_ROW_TRANSLATION[edge_id]];
+        }
+
+        idx_ok &&= i > 0;
+        if (edge_mask & PREV_PLANE_MASK && idx_ok){
+            return this.prev_plane[j][k].vertex_indices[PREV_PLANE_TRANSLATION[edge_id]];
+        }
         return -1;
     }
 

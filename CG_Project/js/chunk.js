@@ -191,53 +191,6 @@ class ChunkGenerator extends Model{
 
         console.log(`Indexing saved: ${100*(1 - vertices.length/indices.length)>>>0}% vertices.`);
         return indices.length;
-        /*var vertex_count = 0;
-        const offset_x = -CHUNK_HALF + chunk.pos[0] * CHUNK_SIZE;
-        const offset_y = -CHUNK_HALF + chunk.pos[1] * CHUNK_SIZE;
-        const offset_z = -CHUNK_HALF + chunk.pos[2] * CHUNK_SIZE;
-
-        const cube_points = [];
-        const cube_levels = [];
-        for (var i = 0; i < CHUNK_VERTS.length; i++){
-            cube_points.push([0,0,0,1]);
-            cube_levels.push(1);
-        }
-
-        for (var i = 0; i < CHUNK_SIZE; i++){
-            const x = i + offset_x;
-
-            for (var j = 0; j < CHUNK_SIZE; j++){
-                const y = j + offset_y;
-
-                for (var k = 0; k < CHUNK_SIZE; k++){
-                    const z = k + offset_z;
-                
-                    // Fetch computed levels
-                    for (var m = 0; m < CHUNK_VERTS.length; m++){
-                        const cube_offset = CHUNK_VERTS[m];
-                    
-                        cube_points[m][0] = x + cube_offset[0];
-                        cube_points[m][1] = y + cube_offset[1];
-                        cube_points[m][2] = z + cube_offset[2];
-                        
-                        cube_levels[m] = this.chunk_levels[i + cube_offset[0]][j + cube_offset[1]][k + cube_offset[2]];
-                    }
-
-                    // Vertices for a single cube
-                    var cube_vertices = Polygonise(cube_points, cube_levels, 0);
-         
-                    // Append new vertices
-                    for (var ii = 0; ii < cube_vertices.length; ii++){
-                        const vertex = cube_vertices[ii];
-                        for (var jj = 0; jj < 4; jj++){
-                            this.vertex_storage[4*vertex_count+jj] = vertex[jj];
-                        }
-                        vertex_count+=1;
-                    }
-                }
-            }
-        }
-        return vertex_count;*/
     }
 
     compute_chunk_data(chunk, n_vertices){
