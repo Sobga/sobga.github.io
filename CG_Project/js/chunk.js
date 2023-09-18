@@ -22,13 +22,15 @@ class ChunkEntry{
     constructor(pos, index){
         this.pos = pos;
         this.buffer_index = index;
+        this.n_unique = -1;
         this.n_vertices = -1;
+        this.is_ready = false;
     }
 }
 
 class ChunkGenerator extends Model{
     constructor(gl, chunks, sampler, render_distance){
-        super(gl);
+        super(gl, null, true);
         this.chunks = chunks;
         this.sampler = sampler;
         this.render_distance = render_distance;
@@ -41,6 +43,7 @@ class ChunkGenerator extends Model{
         this.vertex_storage = new Float32Array(4 * this.max_vertex_chunk);
         this.normal_storage = new Float32Array(4 * this.max_vertex_chunk);
         this.color_storage = new Float32Array(4 * this.max_vertex_chunk);
+        this.index_storage = new Uint32Array(this.max_vertex_chunk);
         
         const max_vertices = this.chunks.length * this.max_vertex_chunk; // Maximum number of vertices in total
         
@@ -58,6 +61,12 @@ class ChunkGenerator extends Model{
         const color_buffer = this.get_buffer(ATTRIBUTES.COLOR);
         gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, sizeof['vec4'] * max_vertices, gl.DYNAMIC_DRAW);
+
+        // Init index buffer
+        const index_buffer = this.get_buffer(ATTRIBUTES.INDEX);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, 4 * max_vertices, gl.DYNAMIC_DRAW);
+
 
         this.missing_indices = Array.from(Array(this.chunks.length).keys());    
         this.chunk_queue = get_chunk_positions(this.render_distance, vec3(0,0,0));
@@ -111,7 +120,7 @@ class ChunkGenerator extends Model{
                 this.chunk_map.set(chunk_index, true);
             else{
                 // Chunk is not inside render distance anymore. Mark it to be generated again
-                chunk.n_vertices = -1;
+                chunk.is_ready = false;
                 this.missing_indices.push(chunk.buffer_index);
             }
         }
@@ -148,9 +157,9 @@ class ChunkGenerator extends Model{
         
         // Generate and upload data
         this.sample_chunk_levels(chunk);
-        const n_vertices = this.generate_vertices(chunk);
-        this.compute_chunk_data(chunk, n_vertices);
-        this.upload_chunk_data(chunk, n_vertices);
+        this.generate_vertices(chunk);
+        this.compute_chunk_data(chunk);
+        this.upload_chunk_data(chunk);
     }
 
     sample_chunk_levels(chunk){
@@ -179,20 +188,34 @@ class ChunkGenerator extends Model{
         const vertices = data[0];
         const indices = data[1];
 
+        for (var i = 0; i < vertices.length; i++){
+            const storage_offset = 3*i;
+            const vertex = vertices[i];
+            this.vertex_storage[storage_offset] = vertex[0];
+            this.vertex_storage[storage_offset + 1] = vertex[1];
+            this.vertex_storage[storage_offset + 2] = vertex[2];
+        }
+
+        for (var i = 0; i < indices.length; i++){
+            this.index_storage[i] = indices[i];
+        }
+
+        chunk.n_unique = vertices.length;
+        chunk.n_vertices = indices.length;
+        /*
         for (var i = 0; i < indices.length; i++){
             const vertex = vertices[indices[i] - buffer_offset];
             const storage_offset = 3*i;
             this.vertex_storage[storage_offset]   = vertex[0];
             this.vertex_storage[storage_offset+1] = vertex[1];
             this.vertex_storage[storage_offset+2] = vertex[2];
-        }
+        }*/
 
         //console.log(`Indexing saved: ${100*(1 - vertices.length/indices.length)>>>0}% vertices.`);
-        return indices.length;
     }
 
-    compute_chunk_data(chunk, n_vertices){
-        for (var i = 0; i < n_vertices; i++){
+    compute_chunk_data(chunk){
+        for (var i = 0; i < chunk.n_unique; i++){
             const vertex_start = 3 * i;
             
             const vertex_x = this.vertex_storage[vertex_start];
@@ -211,17 +234,15 @@ class ChunkGenerator extends Model{
                 this.color_storage[color_offset + j] = color[j];
             }
         }
-
-        return n_vertices;
     }
 
-    upload_chunk_data(chunk, n_vertices){
+    upload_chunk_data(chunk){
         // Compute index in buffer
         const buffer_offset = chunk.buffer_index * this.max_vertex_chunk;
-        const byte_length   = sizeof['vec3'] * n_vertices;
+        const byte_length   = sizeof['vec3'] * chunk.n_unique;
         const buffer_index  = sizeof['vec3'] * buffer_offset;
 
-        const color_length  = sizeof['vec4'] * n_vertices;
+        const color_length  = sizeof['vec4'] * chunk.n_unique;
         const color_index   = sizeof['vec4'] * buffer_offset;
 
         // Push vertices
@@ -232,15 +253,19 @@ class ChunkGenerator extends Model{
         
         // Push colors
         this.set_buffer_sub_data_length(ATTRIBUTES.COLOR, color_index, this.color_storage, color_length);
-        chunk.n_vertices = n_vertices;
+
+        // Push indices
+        this.set_buffer_sub_data_length(ATTRIBUTES.INDEX, buffer_offset, this.index_storage, chunk.n_vertices);
+        chunk.is_ready = true;
     }
 
     draw(){
         for (const chunk of this.chunks){
             // The current chunk must have data in the buffers
-            if (chunk.n_vertices < 0)
+            if (!chunk.is_ready)
                 continue;
-            this.gl.drawArrays(this.gl.TRIANGLES, chunk.buffer_index * this.max_vertex_chunk, chunk.n_vertices);
+            this.gl.drawElements(this.gl.TRIANGLES, chunk.n_vertices, this.gl.UNSIGNED_INT, chunk.buffer_index * this.max_vertex_chunk);
+            //gl.drawElements(gl.TRIANGLES, this.n_vertices, gl.UNSIGNED_INT, 0);
         }
     }
 }

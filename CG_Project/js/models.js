@@ -23,7 +23,7 @@ class Model{
         this.add_buffer(ATTRIBUTES.NORMAL, 3, gl.FLOAT);
         this.add_buffer(ATTRIBUTES.COLOR, 4, gl.FLOAT);
         if (indexed)
-            this.add_buffer(ATTRIBUTES.INDEX, 1, gl.INT, true);
+            this.add_buffer(ATTRIBUTES.INDEX, 1, gl.UNSIGNED_INT, true);
 
         // Create default material
         if (material == undefined || material == null)
@@ -37,7 +37,6 @@ class Model{
         if (!buffer || buffer == -1)
             throw "Failed to create buffer object";
         
-
         if (indexed){
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
         } else{
@@ -54,8 +53,6 @@ class Model{
 
         return buffer;
     }
-
-
 
     set_buffer_data(buffer_id, data, is_element_array){
         const buffer = this.get_buffer(buffer_id)
@@ -74,8 +71,10 @@ class Model{
     }
 
     set_buffer_sub_data_length(buffer_id, index, data, length){
-        this.gl.bindBuffer(gl.ARRAY_BUFFER, this.get_buffer(buffer_id));
-        this.gl.bufferSubData(gl.ARRAY_BUFFER, index, data, 0, length);
+        const buffer = this.get_buffer(buffer_id);
+        const target = buffer.is_indexed ? this.gl.ELEMENT_ARRAY_BUFFER : this.gl.ARRAY_BUFFER;
+        this.gl.bindBuffer(target, buffer);
+        this.gl.bufferSubData(target, index, data, 0, length);
     }
 
     get_buffer(buffer_id){
@@ -118,18 +117,18 @@ class ModelMesh extends Model{
         this.obj_doc = null;
         this.n_vertices = -1;
 
-        readOBJFile(MODEL_PATH + model_name, gl, this, 1, false);
+        readOBJFile(MODEL_PATH + model_name, this, 1, false);
     }
 
     draw(){
         if (this.obj_doc != null && this.obj_doc.isMTLComplete()){
-            onReadComplete(this.gl, this, this.obj_doc);
+            onReadComplete(this, this.obj_doc);
             this.obj_doc = null;
         }
         if (this.n_vertices < 0)
             return;
 
-        gl.drawElements(gl.TRIANGLES, this.n_vertices, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.n_vertices, gl.UNSIGNED_INT, 0);
     }
 }
 

@@ -1,5 +1,5 @@
 "use strict";
-
+/*
 // Create an buffer object and perform an initial configuration
 function initVertexBuffers(gl, program) {
     var o = new Object(); // Utilize Object object to return multiple buffer objects
@@ -30,24 +30,27 @@ function createEmptyArrayBuffer(gl, a_attribute, size, type) {
     gl.enableVertexAttribArray(a_attribute);  // Enable the assignment
   
     return buffer;
-}
+}*/
 
 // Read a file
-function readOBJFile(fileName, gl, model, scale, reverse) {
+function readOBJFile(fileName, model, scale, reverse) {
+    //fetch(fileName).then(response => onReadOBJFile(response.text, fileName, model, scale, reverse));
+
+    //const model_promise = new Promise()
     var request = new XMLHttpRequest();
   
     request.onreadystatechange = function() {
       if (request.readyState === 4 && request.status !== 404) {
-        onReadOBJFile(request.responseText, fileName, gl, model, scale, reverse);
+        onReadOBJFile(request.responseText, fileName, model, scale, reverse);
       }
     }
-    request.open('GET', fileName, true); // Create a request to acquire the file
+    request.open('GET', fileName, false); // Create a request to acquire the file
     request.send();                      // Send the request
   }
   
 
   // OBJ File has been read
-function onReadOBJFile(fileString, fileName, gl, model, scale, reverse) {
+function onReadOBJFile(fileString, fileName, model, scale, reverse) {
     var objDoc = new OBJDoc(fileName);  // Create a OBJDoc object
     var result = objDoc.parse(fileString, scale, reverse); // Parse the file
     if (!result) {
@@ -59,7 +62,7 @@ function onReadOBJFile(fileString, fileName, gl, model, scale, reverse) {
 }
 
 // OBJ File has been read completely
-function onReadComplete(gl, model, objDoc) {
+function onReadComplete(model, objDoc) {
     // Acquire the vertex coordinates and colors from OBJ file
     var drawingInfo = objDoc.getDrawingInfo();
   

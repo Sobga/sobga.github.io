@@ -266,7 +266,7 @@ OBJDoc.prototype.getDrawingInfo = function () {
   var vertices = new Float32Array(numVertices * 3);
   var normals = new Float32Array(numVertices * 3);
   var colors = new Float32Array(numVertices * 4);
-  var indices = new Uint16Array(numIndices);
+  var indices = new Uint32Array(numIndices);
 
   // Set vertex, normal and color
   var index_indices = 0;
