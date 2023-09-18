@@ -1,7 +1,38 @@
 const DERIV_STEP = 0.05;
 
+const SAMPLER_TYPE = {
+    SPHERE: 0,
+    PLANE: 1,
+    SIMPLEX: 2
+}
+
+/**
+ * 
+ * @param {SAMPLER_TYPE} type Type of sampler
+ * @param {Constructor} args 
+ * @returns {Sampler}
+ */
+
+function sampler_from_type(type, args){
+    switch (type){
+        case SAMPLER_TYPE.SPHERE: return new SphereSampler(args[0], args[1]);
+        case SAMPLER_TYPE.PLANE: return new PlaneSampler();
+        case SAMPLER_TYPE.SIMPLEX: return new SimplexSampler(args);
+    }
+}
+
+
 class Sampler{
     constructor(){}
+    
+    sampler_type(){
+        throw 'No sampler-type defined for superclass'
+    }
+
+    sampler_args(){
+        throw 'Not implemented'
+    }
+
     sample(pos){
         return this.sample_xyz(pos[0], pos[1], pos[2]);
     }
@@ -62,6 +93,10 @@ class SphereSampler extends Sampler{
         this.radii = radii;
     }
 
+    sampler_type(){
+        return SAMPLER_TYPE.SPHERE;
+    }
+
     sample_xyz(x,y,z){
         var min_dist = Number.MAX_SAFE_INTEGER;
 
@@ -82,10 +117,15 @@ class PlaneSampler extends Sampler{
 
     }
 
+    sampler_type(){
+        return SAMPLER_TYPE.PLANE;
+    }
+
     sample_xyz(x,y,z){
         return z - 2;
         //return Math.sin(z/(Math.PI) - 0.8); 
     }
+    
 }
 
 class SimplexSampler extends Sampler{
@@ -94,11 +134,19 @@ class SimplexSampler extends Sampler{
         this.seed = seed;
     }
 
+    sampler_type(){
+        return SAMPLER_TYPE.SIMPLEX;
+    }
+
     sample_xyz(x,y,z){
         return noise_simplex_3d(x * 0.06,y*0.06,z*0.06);
     }
 
     sample_1d(x){
         return 1.5*noise_simplex_2d(x, this.seed);
+    }
+
+    sampler_args(){
+        return this.seed;
     }
 }

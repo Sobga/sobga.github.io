@@ -484,9 +484,12 @@ class ChunkMesher{
         this.chunk_half = chunk_size/2;
         this.chunk_offset = [-1, -1, -1];
         this.buffer_offset = -1;
-        this.vertices = [];
-        this.indices = [];
-        this.chunk = null;
+        this.vertices = null;
+        this.indices = null;
+        this.pos = null;
+
+        this.n_vertices = 0;
+        this.n_unique = 0;
 
         // Prepare cache for meshes
         this.prev_cube = new MeshCache();
@@ -501,14 +504,29 @@ class ChunkMesher{
         }
     }
 
-    mesh_chunk(levels, chunk, buffer_offset){
+    vertex_push(v){
+        const offset = 3 * this.n_unique;
+        this.vertices[offset]       = v[0];
+        this.vertices[offset + 1]   = v[1];
+        this.vertices[offset + 2]   = v[2];
+
+        this.n_unique += 1;
+    }
+
+    index_push(i){
+        this.indices[this.n_vertices++] = i;
+    }
+
+    mesh_chunk(levels, pos, vertices, indices, buffer_offset){
         this.buffer_offset = buffer_offset;
-        this.chunk = chunk;
+        this.pos = pos;
+        this.vertices = vertices;
+        this.indices = indices;
 
         // Offset for entire chunk
-        this.chunk_offset[0] = -this.chunk_half + this.chunk.pos[0] * this.chunk_size;
-        this.chunk_offset[1] = -this.chunk_half + this.chunk.pos[1] * this.chunk_size;
-        this.chunk_offset[2] = -this.chunk_half + this.chunk.pos[2] * this.chunk_size;
+        this.chunk_offset[0] = -this.chunk_half + pos[0] * this.chunk_size;
+        this.chunk_offset[1] = -this.chunk_half + pos[1] * this.chunk_size;
+        this.chunk_offset[2] = -this.chunk_half + pos[2] * this.chunk_size;
 
         // Values for specific cube to mesh
         const cube_levels = [];
@@ -532,10 +550,11 @@ class ChunkMesher{
                 }
             }
         }
+
         // Clear vertex and index storage
-        const ret = [this.vertices, this.indices]
-        this.vertices = [];
-        this.indices = [];
+        const ret = [this.n_vertices, this.n_unique];
+        this.n_vertices = 0;
+        this.n_unique = 0;
         return ret;
     }
 
@@ -565,10 +584,11 @@ class ChunkMesher{
             var v_2 = vertex_indices[tri_table[cube_index][i + 1]];
             var v_3 = vertex_indices[tri_table[cube_index][i + 2]];
         
-            this.indices.push(v_1);
-            this.indices.push(v_2);
-            this.indices.push(v_3);
+            this.index_push(v_1);
+            this.index_push(v_2);
+            this.index_push(v_3);
         }
+
         // TODO:
         // Cache results for next iteration
         this.prev_cube.cube_idx = cube_index;
@@ -599,9 +619,9 @@ class ChunkMesher{
         const p = this.create_offset_point(endpoints[0], i, j, k);
         const q = this.create_offset_point(endpoints[1], i, j, k);
         const v = vertex_interp_zero(p, q, cube_levels[endpoints[0]], cube_levels[endpoints[1]]);
-        this.vertices.push(v);
+        this.vertex_push(v);
 
-        return this.vertices.length + this.buffer_offset - 1;
+        return this.n_unique + this.buffer_offset - 1;
     }
 
     lookup_vertex(edge_id, i, j, k){
