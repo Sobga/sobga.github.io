@@ -9,8 +9,6 @@ uniform float k_d; // Diffuseness of material
 uniform float k_s; // Specularity of material
 uniform float s; // Phong exponent
 
-
-
 // Varying positions in light sources
 #define N_LIGHTS 2
 in vec4 v_position_in_lights[N_LIGHTS];
@@ -53,7 +51,7 @@ vec4 spotlight(const in vec4 normal, const in vec3 l_e, const in vec4 l_dir, con
 	float cos_theta = dot(normal, w_i);
 
 	// Compute spotlight intensity	
-	float distance_sq = max(dot(difference, difference) * 0.025, 1.0);
+	float distance_sq = max(dot(difference, difference), 1.0);
 
 	// Light intensity at surface
 	float cos_surface = -dot(l_dir, w_i);
@@ -91,18 +89,16 @@ float pcf(const int shadow_map_id, const in vec4 v_position_in_light){
 
 	vec4 rgbaDepth = offset_lookup(shadow_map_id, shadow_coord, vec2(0.0, 0.0)); 
 	float map_depth = unpackDepth(rgbaDepth);
-	//if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 || shadow_coord.y < 0.0 || shadow_coord.y > 1.0)
-	//return 0.0;
-	
-	float n_free = 0.0;
+
+	int n_free = 0;
 	for (float y = -1.5; y <= 1.5; y += 1.0){
 		for (float x = -1.5; x <= 1.5; x += 1.0){
 			vec4 rgbaDepth = offset_lookup(shadow_map_id, shadow_coord, vec2(x, y)); 
 			float map_depth = unpackDepth(rgbaDepth);
-			n_free += (shadow_coord.z > map_depth + 0.0015) ? 0.0 : 1.0;
+			n_free += (shadow_coord.z > map_depth + 0.0015) ? 0 : 1;
 		}
 	}
-	return max(n_free / 16.0, 0.0);
+	return max(float(n_free) / 16.0, 0.0);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d9/fog-formulas
@@ -124,10 +120,11 @@ void main(){
 	}
 
 	// Pure viewcolor
-	vec4 view_color = vec4(0);
-	view_color.xyz = v_color.xyz * L_a;
-	view_color += v_color * light_color;
+	vec4 view_color = vec4(0.0,0.0,0.0,1.0);
+	view_color.xyz = v_color.xyz * max(light_color.xyz, L_a);
+	//view_color += v_color * light_color;
 
 	out_color = view_color;
 	out_color = mix(view_color, BG_COLOR, depthfog());
+	//out_color = light_color;
 }

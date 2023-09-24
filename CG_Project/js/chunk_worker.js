@@ -2,7 +2,8 @@ importScripts('../Common/MV.js','colors.js', 'simplex.js', 'noise_sample.js', 'c
 
 let sampler;
 
-const max_vertex_chunk = get_max_vertex(false) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
+const MAX_UNIQUE_CHUNK = get_max_vertex_count()[0] * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; // Maximum number of unique vertices in a given chunk
+
 const levels = init_3d_array(CHUNK_SIZE);
 const mesher = new ChunkMesher(CHUNK_SIZE);
 
@@ -27,27 +28,45 @@ onmessage = function(e){
             colors  = buffers[2];
             indices = buffers[3];
 
-            generate_chunk(data["pos"], data["idx"]);
+            generate_chunks(data["pos"], data["idx"]);
             break;
         default:
             console.error("No CHUNK_MSG defined for: " + data["type"]);
     }
 }
 
-function generate_chunk(pos, idx){
-    sample_chunk_levels(pos);
-    const vertex_data = generate_vertices(pos, idx);
-    const n_vertices = vertex_data[0];
-    const n_unique = vertex_data[1]
+function generate_chunks(positions, indices){
+    // 
+    var total_vertices = 0;
+    var total_unique = 0;
+    
+    const vertex_list = [];
+    const unique_list = [];
 
-    compute_chunk_data(n_unique);
+    // Compute data for each chunk
+    for (var i = 0; i < positions.length; i++){
+        sample_chunk_levels(positions[i]);
+        const vertex_data = generate_vertices(positions[i], indices[i], total_unique, total_vertices);
+        const n_vertices = vertex_data[1];
+        const n_unique = vertex_data[0];
+                
+        // Compute normals and colors for the vertices
+        compute_chunk_data(n_unique, total_unique);
+
+        // Update indices to where data is stored
+        vertex_list.push(n_vertices);
+        unique_list.push(n_unique);
+        total_vertices += n_vertices;
+        total_unique += n_unique;
+    }
 
     const data = {
         "type" : CHUNK_MSG.GEN_OK,
-        "n_vertices": n_vertices,
-        "n_unique": n_unique,
+        "n_vertices": vertex_list,
+        "n_unique": unique_list,
         "buffers": buffers
     };
+
     postMessage(data, buffers.map(buffer => buffer.buffer));
 }
 
@@ -71,15 +90,15 @@ function sample_chunk_levels(pos){
     }
 }
 
-function generate_vertices(pos, idx){
-    const buffer_offset = idx * max_vertex_chunk;
-    return mesher.mesh_chunk(levels, pos, vertices, indices, buffer_offset);
+function generate_vertices(pos, idx, unique_offset, index_offset){
+    const buffer_offset = idx * MAX_UNIQUE_CHUNK;
+    return mesher.mesh_chunk(levels, pos, vertices, indices, buffer_offset, unique_offset, index_offset);
 }
 
 
-function compute_chunk_data(n_unique){
+function compute_chunk_data(n_unique, offset){
     for (var i = 0; i < n_unique; i++){
-        const vertex_start = 3 * i;
+        const vertex_start = 3 * (i + offset);
         
         const vertex_x = vertices[vertex_start];
         const vertex_y = vertices[vertex_start + 1];
@@ -92,7 +111,7 @@ function compute_chunk_data(n_unique){
             normals[vertex_start + j] = normal[j];
         }
 
-        const color_offset = 4*i;
+        const color_offset = 4*(i + offset);
         for (var j = 0; j < 4; j++){
             colors[color_offset + j] = color[j];
         }

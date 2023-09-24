@@ -125,7 +125,8 @@ function render(timestamp){
         fps_counter.innerHTML = "FPS: " + Math.floor(fps_sum/fps_samples.length);
         last_fps_stamp = timestamp;
     }
-        
+
+
     // Update the chunks
     chunk_manager.update_chunks(sub_cam.submarine.pos);
     

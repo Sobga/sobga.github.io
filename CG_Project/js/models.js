@@ -10,6 +10,12 @@ class ModelMaterial{
 }
 
 class Model{
+    /**
+     * 
+     * @param {WebGL2RenderingContext} gl 
+     * @param {ModelMaterial} material 
+     * @param {boolean} indexed 
+     */
     constructor(gl, material, indexed = false){
         this.gl = gl;
         this.transform = mat4();
@@ -45,24 +51,22 @@ class Model{
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
             this.gl.vertexAttribPointer(attribute_location, size, type, false, 0, 0);
         }
+
         // Initialize and remember buffer
         buffer.type = type;
         buffer.size = size;
         buffer.is_indexed = indexed;
         this.buffers.set(attribute, buffer);
-
+        
         return buffer;
     }
 
-    set_buffer_data(buffer_id, data, is_element_array){
-        const buffer = this.get_buffer(buffer_id)
-        if (is_element_array != undefined && is_element_array){
-            this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
-            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
-        } else {
-            this.gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-            this.gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-        }
+    set_buffer_data(buffer_id, data){
+        const buffer = this.get_buffer(buffer_id);
+        const target = buffer.is_indexed ? this.gl.ELEMENT_ARRAY_BUFFER : this.gl.ARRAY_BUFFER;
+
+        this.gl.bindBuffer(target, buffer);
+        this.gl.bufferData(target, data, this.gl.STATIC_DRAW);
     }
 
     set_buffer_sub_data(buffer_id, index, data){

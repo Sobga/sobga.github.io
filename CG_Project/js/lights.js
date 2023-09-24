@@ -99,7 +99,7 @@ class Spotlight extends Camera{
         this.gl = gl;
         this.pos = pos;
         this.dir = dir;
-        this.emission = vec3(1,1,1);
+        this.emission = vec3(20, 20, 20);
         this.frambuffer = framebuffer;
     }
     

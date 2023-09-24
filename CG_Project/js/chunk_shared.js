@@ -1,6 +1,8 @@
 const CHUNK_SIZE = 16;
 const CHUNK_HALF = CHUNK_SIZE/2;
 
+const BUFFER_BATCH_SIZE = 10;
+
 const CHUNK_MSG = {
     SAMPLER: 0,
     BUFFERS: 1,

@@ -1,5 +1,5 @@
 // Taken from http://paulbourke.net/geometry/polygonise/
-// Translated by Olav (s184195) into JS
+// Translated into JS and optimized by Olav (s184195)
 
  /*
 	Given a grid cell and an isolevel, calculate the triangular
@@ -326,13 +326,11 @@ const PREV_ROW_TRANSLATION =    [4, 5, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1];
 const PREV_PLANE_TRANSLATION =  [2, -1, -1, -1, 6, -1, -1, -1, 11, 10, -1, -1];
 
 // http://paulbourke.net/geometry/polygonise/polygonise1.gif
-function Polygonise(points, levels, isolevel){
+/*function Polygonise(points, levels, isolevel){
    var vertlist = [];
  
-	/*
-	   Determine the index into the edge table which
-	   tells us which vertices are inside of the surface
-	*/
+	// Determine the index into the edge table which
+	// tells us which vertices are inside of the surface
    var cubeindex = 0;
    if (levels[0] < isolevel) cubeindex |= 1;
    if (levels[1] < isolevel) cubeindex |= 2;
@@ -343,11 +341,11 @@ function Polygonise(points, levels, isolevel){
    if (levels[6] < isolevel) cubeindex |= 64;
    if (levels[7] < isolevel) cubeindex |= 128;
  
-   /* Cube is entirely in/out of the surface */
+   // Cube is entirely in/out of the surface
    if (edge_table[cubeindex] == 0)
 	  return [];
  
-   /* Find the vertices where the surface intersects the cube */
+   // Find the vertices where the surface intersects the cube
    if (edge_table[cubeindex] & 1)
 	  vertlist[0] =
 		 vertex_interp(isolevel,points[0],points[1],levels[0],levels[1]);
@@ -385,7 +383,7 @@ function Polygonise(points, levels, isolevel){
 	  vertlist[11] =
 		 vertex_interp(isolevel,points[3],points[7],levels[3],levels[7]);
  
-   /* Create the triangle */
+   // Create the triangle
    var vertices = [];
    for (var i=0; tri_table[cubeindex][i] !=-1; i+=3) {
 	  var v_1 = vertlist[tri_table[cubeindex][i]];
@@ -398,19 +396,25 @@ function Polygonise(points, levels, isolevel){
    }
  
    return vertices;
- }
+ }*/
  
  /* Returns the maximum number of vertices required for one cube */
-function get_max_vertex(do_indexing){
-	if (!do_indexing)
-		return 15;
+function get_max_vertex_count(){
+    var max_unique = 0;
+    var max_vertices = 0;
 
-	var max_verts = 0;
 	for (var i = 0; i < tri_table.length; i++){
-		max_verts = Math.max(max_verts, new Set(tri_table[i]).size - 1);
+        const triangulation = tri_table[i];
+        max_unique = Math.max(max_unique, new Set(triangulation).size - 1);
+        
+        var current_vertex_count = 0;
+        for (var j = 0; j < triangulation.length; j++)
+            if (triangulation[j] != -1)
+                current_vertex_count += 1;
+        max_vertices = Math.max(current_vertex_count, max_vertices);
 	}
 	
-	return max_verts;
+	return [max_unique, max_vertices];
 }
  /*
 	Linearly interpolate the position where an isosurface cuts
@@ -460,7 +464,7 @@ function vertex_interp_zero(p1, p2, val_p1, val_p2){
     // TODO: Should vertex be between p1 and p2?
     const d_val = val_p2 - val_p1;
     if (Math.abs(val_p1-val_p2) < EPSILON)
-       throw new Error("");
+       throw new Error("Marching cubes: Malformed vertex");
 
     // Interpolate 
     const mu = -val_p1 / d_val;
@@ -483,10 +487,13 @@ class ChunkMesher{
         this.chunk_size = chunk_size;
         this.chunk_half = chunk_size/2;
         this.chunk_offset = [-1, -1, -1];
-        this.buffer_offset = -1;
+        this.buffer_index = -1;
         this.vertices = null;
         this.indices = null;
         this.pos = null;
+
+        this.unqiue_offset = 0;
+        this.index_offset = 0;
 
         this.n_vertices = 0;
         this.n_unique = 0;
@@ -505,7 +512,7 @@ class ChunkMesher{
     }
 
     vertex_push(v){
-        const offset = 3 * this.n_unique;
+        const offset = 3 * (this.n_unique + this.unqiue_offset);
         this.vertices[offset]       = v[0];
         this.vertices[offset + 1]   = v[1];
         this.vertices[offset + 2]   = v[2];
@@ -514,14 +521,19 @@ class ChunkMesher{
     }
 
     index_push(i){
-        this.indices[this.n_vertices++] = i;
+        const offset = this.n_vertices + this.index_offset;
+        this.indices[offset] = i;
+        this.n_vertices++
     }
 
-    mesh_chunk(levels, pos, vertices, indices, buffer_offset){
-        this.buffer_offset = buffer_offset;
+    mesh_chunk(levels, pos, vertices, indices, buffer_index, unique_offset, index_offset){
+        this.buffer_index = buffer_index;
         this.pos = pos;
         this.vertices = vertices;
         this.indices = indices;
+
+        this.unqiue_offset = unique_offset;
+        this.index_offset = index_offset;
 
         // Offset for entire chunk
         this.chunk_offset[0] = -this.chunk_half + pos[0] * this.chunk_size;
@@ -552,14 +564,18 @@ class ChunkMesher{
         }
 
         // Clear vertex and index storage
-        const ret = [this.n_vertices, this.n_unique];
-        this.n_vertices = 0;
+        const ret = [this.n_unique, this.n_vertices];
         this.n_unique = 0;
+        this.n_vertices = 0;
         return ret;
     }
 
     /**
      * Meshes a single 1x1x1 cube
+     * @param {number[][][]} cube_levels Sampled values of terrain function
+     * @param {number} i x-offset of the cube in the chunk
+     * @param {number} j y-offset of the cube in the chunk
+     * @param {number} k z-offset of the cube in the chunk
      */
     mesh_cube(cube_levels, i, j, k){
         const cube_index = compute_cube_index(cube_levels);
@@ -621,9 +637,10 @@ class ChunkMesher{
         const v = vertex_interp_zero(p, q, cube_levels[endpoints[0]], cube_levels[endpoints[1]]);
         this.vertex_push(v);
 
-        return this.n_unique + this.buffer_offset - 1;
+        return this.n_unique + this.buffer_index - 1;
     }
 
+    // Return index of vertex if it was computed previously
     lookup_vertex(edge_id, i, j, k){
         const edge_mask = 1 << edge_id;
         var idx_ok = k > 0;

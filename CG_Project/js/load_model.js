@@ -70,7 +70,7 @@ function onReadComplete(model, objDoc) {
     model.set_buffer_data(ATTRIBUTES.POSITION, drawingInfo.vertices)
     model.set_buffer_data(ATTRIBUTES.NORMAL, drawingInfo.normals)
     model.set_buffer_data(ATTRIBUTES.COLOR, drawingInfo.colors)
-    model.set_buffer_data(ATTRIBUTES.INDEX, drawingInfo.indices, true);
+    model.set_buffer_data(ATTRIBUTES.INDEX, drawingInfo.indices);
   
     model.n_vertices = drawingInfo.indices.length;
     return drawingInfo;

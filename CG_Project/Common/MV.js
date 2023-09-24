@@ -702,7 +702,8 @@ var sizeof = {
     'vec4' : new Float32Array( flatten(vec4()) ).byteLength,
     'mat2' : new Float32Array( flatten(mat2()) ).byteLength,
     'mat3' : new Float32Array( flatten(mat3()) ).byteLength,
-    'mat4' : new Float32Array( flatten(mat4()) ).byteLength
+    'mat4' : new Float32Array( flatten(mat4()) ).byteLength,
+    'uint32': new Uint32Array(1).BYTES_PER_ELEMENT
 };
 
 // new functions 5/2/2015
