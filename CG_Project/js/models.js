@@ -143,7 +143,7 @@ class Submarine extends Model{
         this.dir = dir;
         this.lights = [];
 
-        const light_offsets = [vec4(-0.94, -1, 1, 1), vec4(0.94, -1, 1, 1)];
+        const light_offsets = [vec4(-0.94, -1, 1, 1.03), vec4(0.94, -1, 1, 1.03)];
         const light_directions = [vec4(0, 0, 1, 0), vec4(0, 0, 1, 0)]
 
         // Initialize light sources

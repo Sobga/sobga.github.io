@@ -213,8 +213,9 @@ class ModelShader extends Shader{
         this.add_uniform(UNIFORMS.CAMERA_POSITION, UNIFORM_TYPES.VEC4);
     }
 
-    apply_lights(lights){
-        const n_lights = 2; // TODO: Get from lighting manager
+    apply_lights(light_manager){
+        const lights = light_manager.get_lights();
+        const n_lights = lights.length; // TODO: Get from lighting manager
         const light_positions = new Float32Array(4*n_lights);
         const light_dirs = new Float32Array(4*n_lights);
         const light_emissions = new Float32Array(3*n_lights);

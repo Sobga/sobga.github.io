@@ -26,11 +26,11 @@ class Sampler{
     constructor(){}
     
     sampler_type(){
-        throw 'No sampler-type defined for superclass'
+        return SAMPLER_TYPE.PLANE;
     }
 
     sampler_args(){
-        throw 'Not implemented'
+        return null;
     }
 
     sample(pos){
@@ -95,6 +95,10 @@ class SphereSampler extends Sampler{
 
     sampler_type(){
         return SAMPLER_TYPE.SPHERE;
+    }
+
+    sampler_args(){
+        return [this.centers, this.radii];
     }
 
     sample_xyz(x,y,z){

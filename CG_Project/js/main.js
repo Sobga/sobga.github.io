@@ -1,12 +1,14 @@
 "use strict";
 let gl;
 
+// FPS
 let fps_counter;
 var fps_sum = 0;
 const fps_samples = [];
 
-// Camera fields
 let canvas;
+
+// Camera fields
 const player_cam = new KeyboardCam(vec3(-1, 0.5, 0), vec4(0,0,1,0));
 const rotate_cam = new RotateCam(vec3(0,0,0), 20);
 let sub_cam;
@@ -15,11 +17,11 @@ var camera_index = 0;
 
 const BG_COLOR = vec4(0.2039, 0.1647, 0.7804, 1.0);
 const models = [];
-let lightManager;
+let light_manager;
 
-//const noise_sampler = new SphereSampler([vec3(0, 0, 15), vec3(0,0, 4)], [7, 2]);
+const noise_sampler = new SphereSampler([vec3(0, 0, 15), vec3(0,0, 4)], [7, 2]);
 //const noise_sampler = new PlaneSampler();
-const noise_sampler = new SimplexSampler(0);
+//const noise_sampler = new SimplexSampler(0);
 let chunk_manager;
 
 var last_timestamp = 0;
@@ -76,30 +78,24 @@ window.onload = function init(){
     // TODO: MOVE TO MODEL SHADER?
     gl.model_shader.use_shader();
     gl.model_shader.set_uniform_value(UNIFORMS.LIGHT_AMBIENT, vec3(0.15, 0.15, 0.15));
-    gl.model_shader.set_uniform_value(UNIFORMS.SHADOW_SCALE, vec2(1/FBO_SIZE, 1/FBO_SIZE));
+    gl.model_shader.set_uniform_value(UNIFORMS.SHADOW_SCALE, vec2(1/FBO_SIZE, 1/FBO_SIZE));        
 
-    // Light textures
-    // TODO: Read required number of
-    gl.model_shader.set_uniform_value(UNIFORMS.SHADOW_MAPS, 0);
-        
-
-    lightManager = new LightManager(gl);
+    light_manager = new LightManager(gl);
 
     // Create submarine
     //sub_cam = new SubmarineCam(gl, lightManager, vec3(0, -16, -8), vec4(-1,0,0,0));
-    sub_cam = new SubmarineCam(gl, lightManager, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
-    //sub_cam = new SubmarineCam(gl, lightManager, vec3(-4, 0, 0), vec4(1, 0, 0,0));
+    //sub_cam = new SubmarineCam(gl, lightManager, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
+    sub_cam = new SubmarineCam(gl, light_manager, vec3(0, 1, 0), vec4(0, 0, 1, 0));
     cameras.push(sub_cam);
     sub_cam.set_active(true);
     camera_index = cameras.length - 1; // Set camera index to be submarine camera
     models.push(sub_cam.submarine);
-
+    cameras.push(...sub_cam.submarine.lights)
 
     // Initialize terrain generation
     chunk_manager = new ChunkManager(gl, noise_sampler, 3);
     models.push(chunk_manager.chunk_generator);
     
-
     // Ensure cameras have correct resolution/aspect ratio
     update_resolution();
     requestAnimationFrame(render);
@@ -126,7 +122,6 @@ function render(timestamp){
         last_fps_stamp = timestamp;
     }
 
-
     // Update the chunks
     chunk_manager.update_chunks(sub_cam.submarine.pos);
     
@@ -134,15 +129,12 @@ function render(timestamp){
     for (var i = 0; i < cameras.length; i++){
         cameras[i].update(delta_t);
     }
-    //current_cam.update(delta_t);
+
     const camera_matrix = current_cam.get_cam_matrix();
-    
     
     /* SHADOWS */
     gl.shadow_shader.use_shader();
-    const lights = lightManager.get_lights();
-    for (var i = 0; i < lights.length; i++)
-        lights[i].compute_shadowmap(gl.shadow_shader, models);
+    light_manager.compute_shadowmaps(gl.shadow_shader, models)
     
     /* MODELS DRAW */
     // Set background color
@@ -155,7 +147,7 @@ function render(timestamp){
     gl.model_shader.set_uniform_value(UNIFORMS.CAMERA_POSITION, current_cam.get_cam_pos());
     
     // Apply lighting
-    gl.model_shader.apply_lights(lights);
+    gl.model_shader.apply_lights(light_manager);
     
     // Draw models
     for (var i = 0; i < models.length; i++)

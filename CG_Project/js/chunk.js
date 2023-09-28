@@ -269,9 +269,6 @@ class ChunkGenerator extends Model{
                 //const byte_length = element_size * chunks[j].n_unique;
                 const data = this.chunk_buffers[i].subarray(n_elements * unique_acc_indices[j], n_elements * (chunks[j].n_unique + unique_acc_indices[j]));
                 //this.gl.bufferSubData(this.gl.ARRAY_BUFFER, dst_byte_offset, this.chunk_buffers[i], unique_acc_indices[j], byte_length);
-                if (chunks[j].buffer_index == 1)
-                    diagonse_array(data, chunks[j], n_elements);
-
                 this.gl.bufferSubData(this.gl.ARRAY_BUFFER, dst_byte_offset, data);
             }
         }
