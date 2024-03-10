@@ -55,7 +55,8 @@ function render(){
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
-class TerrainShader extends Shader{
+
+class TerrainBaseShader extends Shader {
     makeVertexSource(){
         const body = /*glsl*/ `
         in vec2 aPosition;
@@ -160,7 +161,7 @@ class TerrainShader extends Shader{
         }
         
         // Returns whether terrain was hit
-        bool rayMarch(const in vec3 position, const in vec3 rayDir, const in float maxDistance, out float distance){
+        bool raymarchTerrain(const in vec3 position, const in vec3 rayDir, const in float maxDistance, out float distance){
             float dt = 0.01;
             float t = 0.1;
 
@@ -186,9 +187,18 @@ class TerrainShader extends Shader{
             }
 
             return false;
-        }
+        }`
+    }
+
+    constructor(gl){
+        super(gl, null);
+    }
+}
 
 
+class TerrainShader extends TerrainBaseShader{
+    makeFragmentSource(){
+        return super.makeFragmentSource() + /*glsl*/ `
         // https://iquilezles.org/articles/fog/
         vec3 applyFog(const vec3 color, const float depth, const float sunStrength, const vec3 rayDir){
             const float b = 0.02; // Fog strength
@@ -205,13 +215,13 @@ class TerrainShader extends Shader{
             vec3 rayDir = generateRayDirection(uCamDirection, vPosition);
 
             float distance;
-            if (rayMarch(uCamPosition, rayDir, 10000.0, distance)){
+            if (raymarchTerrain(uCamPosition, rayDir, 10000.0, distance)){
                 vec3 hit = rayDir * distance + uCamPosition;
                 vec3 normal = getNormal(hit);
 
                 float sunStrength = max(dot(normal, uSunDirection), .0);
                 float shadowDistance;
-                float light = rayMarch(hit, uSunDirection, 1000.0, shadowDistance) ? smoothstep(0.0, 100.0, shadowDistance) / 100.0 : sunStrength;
+                float light = raymarchTerrain(hit, uSunDirection, 1000.0, shadowDistance) ? smoothstep(0.0, 10.0, shadowDistance) / 100.0 : sunStrength;
 
                 vec3 terrainShade = terrainColor * light;
                 out_color.rgb = applyFog(terrainShade, distance, sunStrength, rayDir);
