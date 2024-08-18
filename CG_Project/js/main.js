@@ -85,7 +85,7 @@ window.onload = function init(){
     // Create submarine
     //sub_cam = new SubmarineCam(gl, lightManager, vec3(0, -16, -8), vec4(-1,0,0,0));
     //sub_cam = new SubmarineCam(gl, lightManager, vec3(-5.785492788345726, 0.5, -4.536038943953013), vec4(-0.7260806560516357, 0, 0.6876094937324524,0));
-    sub_cam = new SubmarineCam(gl, light_manager, vec3(0, 1, 0), vec4(0, 0, 1, 0));
+    sub_cam = new SubmarineCam(gl, light_manager, vec3(0, 1, -5), vec4(0, 0, 1, 0));
     cameras.push(sub_cam);
     sub_cam.set_active(true);
     camera_index = cameras.length - 1; // Set camera index to be submarine camera

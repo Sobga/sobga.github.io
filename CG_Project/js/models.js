@@ -143,11 +143,11 @@ class Submarine extends Model{
         this.dir = dir;
         this.lights = [];
 
-        const light_offsets = [vec4(-0.94, -1, 1, 1.03), vec4(0.94, -1, 1, 1.03)];
+        const light_offsets = [vec4(-0.94, -1, 1.03, 1), vec4(0.94, -1, 1.03, 1)];
         const light_directions = [vec4(0, 0, 1, 0), vec4(0, 0, 1, 0)]
 
         // Initialize light sources
-        for (var i = 0; i < 2; i++){
+        for (var i = 0; i < light_offsets.length; i++){
             const light = lightManager.create_spotlight(light_offsets[i], light_directions[i]);
             light.offset = light_offsets[i];
             light.start_direction = light_directions[i];

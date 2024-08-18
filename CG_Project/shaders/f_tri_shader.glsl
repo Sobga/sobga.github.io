@@ -98,6 +98,9 @@ float pcf(const int shadow_map_id, const in vec4 v_position_in_light){
 			n_free += (shadow_coord.z > map_depth + 0.0015) ? 0 : 1;
 		}
 	}
+
+	//return shadow_coord.z;
+	//return map_depth;
 	return max(float(n_free) / 16.0, 0.0);
 }
 
@@ -116,15 +119,16 @@ void main(){
 	for (int i = 0; i < N_LIGHTS; i++){
 		vec4 lightness = spotlight(normal, light_emissions[i], light_dirs[i], light_positions[i]);
 		float visibility = pcf(i, v_position_in_lights[i]);
-		light_color += lightness * visibility;
+		//light_color += lightness * visibility;
+		light_color.xyz += vec3(i, 1-i, 0.0) * visibility;
 	}
 
 	// Pure viewcolor
-	vec4 view_color = vec4(0.0,0.0,0.0,1.0);
+	vec4 view_color = vec4(0.0, 0.0, 0.0, 1.0);
 	view_color.xyz = v_color.xyz * max(light_color.xyz, L_a);
 	//view_color += v_color * light_color;
 
 	out_color = view_color;
 	out_color = mix(view_color, BG_COLOR, depthfog());
-	//out_color = light_color;
+	out_color = light_color;
 }

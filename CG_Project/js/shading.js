@@ -215,7 +215,9 @@ class ModelShader extends Shader{
 
     apply_lights(light_manager){
         const lights = light_manager.get_lights();
-        const n_lights = lights.length; // TODO: Get from lighting manager
+        const n_lights = lights.length;
+
+
         const light_positions = new Float32Array(4*n_lights);
         const light_dirs = new Float32Array(4*n_lights);
         const light_emissions = new Float32Array(3*n_lights);
@@ -231,11 +233,6 @@ class ModelShader extends Shader{
             for (var j = 0; j < 3; j++){
                 light_emissions[3*i + j] = light.emission[j];
             }
-            //this.set_uniform_value(UNIFORMS.LIGHT_POSITION + "_" + i, light.pos);
-            //this.set_uniform_value(UNIFORMS.LIGHT_DIRECTION + "_" + i, light.dir);
-
-            //this.set_uniform_value(UNIFORMS.LIGHT_EMISSION + "_" + i, light.emission);
-            
 
             // Flatten light matrix into array
             const light_mat = light.get_cam_matrix();
