@@ -139,7 +139,8 @@ class HexMeshGenerator{
 
 class TerrainTransform extends FeedbackShader{
     makeVertexSource(args) {
-        return `#define M_PI_INV 0.31830988618
+        return `
+#define M_PI_INV 0.31830988618
 
 uniform highp vec4 uBounds; // XY: min corner, ZW: max corner        
 in highp vec2 aPosition;

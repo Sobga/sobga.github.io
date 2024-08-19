@@ -59,6 +59,14 @@ class Shader {
     use(){
         this._gl.useProgram(this._program);
     }
+
+    unuse(){
+        this._gl.useProgram(null);
+    }
+
+    destroy(){
+        this._gl.deleteProgram(this._program);
+    }
 }
 
 class FeedbackShader extends Shader{
@@ -194,6 +202,23 @@ class ShaderUniformVec3 extends ShaderUniform{
      */
     uploadVec3(v){
         this._gl.uniform3f(this._location, v.x, v.y, v.z);
+    }
+}
+
+class ShaderUniformVec3Array extends ShaderUniform{
+    upload(data) {
+        this._gl.uniform3fv(this._location, data);
+    }
+
+    /**
+     * @param {Vec3[]} vectors
+     */
+    uploadVec3Array(vectors){
+        const data = new Float32Array(3 * vectors.length);
+        for (let i = 0; i < vectors.length; i++){
+            data.set(vectors[i].values, 3*i);
+        }
+        this._gl.uniform3fv(this._location, data);
     }
 }
 

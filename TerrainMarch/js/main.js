@@ -26,7 +26,7 @@ window.onload = function init(){
     outShader = new TerrainFinalizeShader(gl);
 
     distanceTexture = new TextureRGBA32F(gl, canvas.width, canvas.height);
-    distanceBuffer = new Framebuffer(gl, distanceTexture);
+    distanceBuffer = new Framebuffer(gl, [distanceTexture]);
 
     createAndAttachQuad();
 
