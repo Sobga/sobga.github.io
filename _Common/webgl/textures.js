@@ -37,6 +37,11 @@ class Texture{
         this._gl.bindTexture(this._gl.TEXTURE_2D, null);
         this.index = null;
     }
+
+    destroy(){
+        this._gl.deleteTexture(this.glTexture);
+        this.glTexture = null;
+    }
 }
 
 class TextureRGBA32F extends Texture{
@@ -71,7 +76,12 @@ class Framebuffer{
 
         /** @type {WebGLFramebuffer}*/
         this.glFramebuffer = this.gl.createFramebuffer();
-        this.setTextures(textures, attachmentPoints);
+
+        if (this.textures.length > 0){
+            this.bind();
+            this.setTextures(textures, attachmentPoints);
+            this.unbind();
+        }
     }
 
     width() {
@@ -83,7 +93,7 @@ class Framebuffer{
     }
 
     setTextures(textures, attachmentPoints=[]){
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.glFramebuffer);
+        this.textures = textures;
 
         const drawBuffers = [];
         let maxIndex = -1;
@@ -105,8 +115,6 @@ class Framebuffer{
             }
         }
         this.gl.drawBuffers(drawBuffers);
-
-        this.gl.bindFramebuffer(WebGL2RenderingContext.FRAMEBUFFER, null);
     }
 
     bind(){
@@ -117,6 +125,12 @@ class Framebuffer{
     unbind(){
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+    }
+
+    clear(){
+        for (let i = 0; i < this.textures.length; i++){
+            this.gl.clearBufferuiv(WebGL2RenderingContext.COLOR, i, new Uint32Array([0, 0, 0, 0]));
+        }
     }
 
     destroy(){

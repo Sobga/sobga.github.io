@@ -3,10 +3,10 @@ let main;
 
 window.onload = function init(){
     main = new Main();
-    addEventListener('onkeydown', _ => {
-        requestAnimationFrame(main.runGL.bind(main));
-        console.log('A')
+    addEventListener('keyup', _ => {
+        main.reset();
     });
+    main.reset();
 }
 
 class Main{
@@ -31,15 +31,29 @@ class Main{
         this.firstTexture = new TextureRGBA32UI(this._gl, this._gl.canvas.width, this._gl.canvas.height);
         this.secondTexture = new TextureRGBA32UI(this._gl, this._gl.canvas.width, this._gl.canvas.height);
 
-        this.framebuffer = new Framebuffer(this._gl, [this.firstTexture]);
+        this._sampledTexture = this.firstTexture;
+
+        this.framebuffer = new Framebuffer(this._gl, [this._sampledTexture]);
+        this.lastTimestamp = Date.now();
     }
 
-    runGL(){
+    reset(){
+        this.framebuffer.unbind();
         this._gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT);
 
-        const nSteps = 2;
+        const width = this._gl.canvas.width;
+        const height = this._gl.canvas.height;
+        this.firstTexture.destroy();
+        this.secondTexture.destroy();
+        this.firstTexture = new TextureRGBA32UI(this._gl, width, height);
+        this.secondTexture = new TextureRGBA32UI(this._gl, width, height);
+
+        this._sampledTexture = this.firstTexture;
 
         this.framebuffer.bind();
+        this.framebuffer.setTextures([this._sampledTexture]);
+        this.stepSize = Math.ceil(width / 2);
+
         // Initially, seed JFA texture
         this.jfaInput.use();
         this.jfaInput.render([
@@ -47,22 +61,33 @@ class Main{
             new Vec3(0, 0, 2),
         ]);
 
+        requestAnimationFrame(main.loop.bind(main));
+    }
+
+    loop(){
+        requestAnimationFrame(this.loop.bind(this));
+
+        const timestamp = Date.now();
+        if (timestamp - this.lastTimestamp < 250){
+            return;
+        }
+        this.lastTimestamp = timestamp;
+        this.framebuffer.bind();
         this.jfaStep.use();
-        let sampledTexture = this.firstTexture;
-        let renderToTexture = this.secondTexture;
+        /** @type TextureRGBA32UI **/
+        let renderToTexture = this._sampledTexture === this.firstTexture ? this.secondTexture : this.firstTexture;
 
         // Perform some steps
-        for (let i = 0; i < nSteps; i++) {
-            this.framebuffer.setTextures([renderToTexture]);
-            sampledTexture.bind(0);
+        this.framebuffer.setTextures([renderToTexture]);
+        this._sampledTexture.bind(0);
 
-            this.jfaStep.render(1);
+        this.jfaStep.render(Math.abs(this.stepSize));
 
-            // Swap active textures
-            const tmpTexture = renderToTexture;
-            renderToTexture = sampledTexture;
-            sampledTexture = tmpTexture;
-        }
+
+        // Swap active textures
+        const tmpTexture = renderToTexture;
+        renderToTexture = this._sampledTexture;
+        this._sampledTexture = tmpTexture;
 
         this.framebuffer.unbind();
         renderToTexture.bind(0);
@@ -71,6 +96,14 @@ class Main{
         this.jfaResolve.use();
         this.jfaResolve.render(this.colors);
         this.jfaResolve.unuse();
+
+        if (this.stepSize === -1){
+            return;
+        } else if (this.stepSize === 1){
+            this.stepSize = -1;
+        } else {
+            this.stepSize = Math.ceil(0.5 * this.stepSize);
+        }
     }
 }
 
@@ -156,20 +189,22 @@ class JFAStepShader extends BaseQuadShader{
         
         void main(){
             ivec2 coord = ivec2(gl_FragCoord.xy);
-            
             uvec4 center = texelFetch(uJFATex, coord, 0);
             
-            uvec4[4] samples; 
-            samples[0] = texelFetch(uJFATex, ivec2(coord.x + uStepSize, coord.y), 0);
-            samples[1] = texelFetch(uJFATex, ivec2(coord.x - uStepSize, coord.y), 0);
-            samples[2] = texelFetch(uJFATex, ivec2(coord.x, coord.y + uStepSize), 0);
-            samples[3] = texelFetch(uJFATex, ivec2(coord.x, coord.y - uStepSize), 0);
+            uvec4 samples[8];
+            samples[0] = texelFetch(uJFATex, coord + ivec2(-uStepSize, 0), 0);
+            samples[1] = texelFetch(uJFATex, coord + ivec2(-uStepSize), 0);
+            samples[2] = texelFetch(uJFATex, coord + ivec2(0, -uStepSize), 0);
+            samples[3] = texelFetch(uJFATex, coord + ivec2(uStepSize, -uStepSize), 0);
+            samples[4] = texelFetch(uJFATex, coord + ivec2(uStepSize, 0), 0);
+            samples[5] = texelFetch(uJFATex, coord + ivec2(uStepSize), 0);
+            samples[6] = texelFetch(uJFATex, coord + ivec2(0, uStepSize), 0);
+            samples[7] = texelFetch(uJFATex, coord + ivec2(-uStepSize, uStepSize), 0);
             
             for (int i = 0; i < samples.length(); i++){
-                uvec4 s = samples[i]; 
-                center = (s.z != 0u && distanceSQ(s.xy) < distanceSQ(center.xy)) ? s : center;     
+                uvec4 s = samples[i];
+                center = s.z != 0u && (distanceSQ(s.xy) < distanceSQ(center.xy) || center.z == 0u) ? s : center;
             }
-            
             outData = center;
         }
         `;
