@@ -1,4 +1,4 @@
-importScripts('../Common/MV.js','colors.js', 'simplex.js', 'noise_sample.js', 'chunk_shared.js', 'marching_cubes.js');
+importScripts('../AB_Common/MV.js','colors.js', 'simplex.js', 'noise_sample.js', 'chunk_shared.js', 'marching_cubes.js');
 
 let sampler;
 

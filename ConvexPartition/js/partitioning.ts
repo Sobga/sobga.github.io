@@ -1,5 +1,5 @@
-import { Point, Polygon, Vertex } from "../../_Common/polygon.js";
-import { bbox, dist_sq, find_closest_intersection, is_reflex } from "../../_Common/utils.js";
+import { Point, Polygon, Vertex } from "../../AB_Common/polygon.js";
+import { bbox, dist_sq, find_closest_intersection, is_reflex } from "../../AB_Common/utils.js";
 
 export abstract class Partitioner{
     abstract partition(polygon: Polygon): Polygon[];

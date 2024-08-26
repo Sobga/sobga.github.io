@@ -1,7 +1,7 @@
-import { PolygonDrawer } from "../../_Common/drawer.js";
-import { load_polygon } from "../../_Common/loader.js";
-import { Point, Polygon } from "../../_Common/polygon.js";
-import { find_closest_intersection } from "../../_Common/utils.js";
+import { PolygonDrawer } from "../../AB_Common/drawer.js";
+import { load_polygon } from "../../AB_Common/loader.js";
+import { Point, Polygon } from "../../AB_Common/polygon.js";
+import { find_closest_intersection } from "../../AB_Common/utils.js";
 import {BisectPartition, Partitioner, SimplePartition} from "./partitioning.js";
 
 let canvas: HTMLCanvasElement;

@@ -463,7 +463,7 @@ function getWordLength(str, start) {
 }
 
 //------------------------------------------------------------------------------
-// Common function
+// AB_Common function
 //------------------------------------------------------------------------------
 function calcNormal(p0, p1, p2) {
   // v0: a vector from p1 to p0, v1; a vector from p1 to p2
