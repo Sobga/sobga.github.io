@@ -23,7 +23,7 @@ export const http = <T>(request: RequestInfo): Promise<T> => {
   
   // Fetch the game-data JSON and use an interface to type it
   async function fetct_polygon_data(polygon_name: string) {
-    return http<PolygonData>('/_Common/instances/' + polygon_name);
+    return http<PolygonData>('/AB_Common/instances/' + polygon_name);
   }
   
 

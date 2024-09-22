@@ -1,7 +1,7 @@
-import { BinaryTree } from "../../_Common/bbst.js";
-import { HalfEdge, Point, Polygon, Vertex, create_full_edge } from "../../_Common/polygon.js";
-import { PriorityQueue } from "../../_Common/priority_queue.js";
-import { is_reflex, p_orientation } from "../../_Common/utils.js";
+import { BinaryTree } from "../../AB_Common/bbst.js";
+import { HalfEdge, Point, Polygon, Vertex, create_full_edge } from "../../AB_Common/polygon.js";
+import { PriorityQueue } from "../../AB_Common/priority_queue.js";
+import { is_reflex, p_orientation } from "../../AB_Common/utils.js";
 
 const EPSILON = 1E-4;
 const VERTEX_TYPE = {

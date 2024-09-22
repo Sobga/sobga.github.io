@@ -1,7 +1,7 @@
-import { bst_tester } from "../../_Common/bbst.js";
-import { PolygonDrawer } from "../../_Common/drawer.js";
-import { load_polygon } from "../../_Common/loader.js";
-import { priority_queue_tester } from "../../_Common/priority_queue.js";
+import { bst_tester } from "../../AB_Common/bbst.js";
+import { PolygonDrawer } from "../../AB_Common/drawer.js";
+import { load_polygon } from "../../AB_Common/loader.js";
+import { priority_queue_tester } from "../../AB_Common/priority_queue.js";
 import { Triangulator } from "./triangulation.js";
 
 let canvas: HTMLCanvasElement;

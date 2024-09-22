@@ -20,9 +20,14 @@ class Main{
 
 
         this.colors = [
-            new Vec3(1, 1, 1),
-            new Vec3(0, 0.7, 0.3)
+            new Vec3(255, 255, 255),
+            new Vec3(62, 88, 103),
+            new Vec3(141, 198, 63),
         ];
+
+        for (const color of this.colors){
+            color.scale(1/255);
+        }
 
         this.jfaInput = new JFAInputShader(this._gl);
         this.jfaStep = new JFAStepShader(this._gl);
@@ -54,12 +59,34 @@ class Main{
         this.framebuffer.setTextures([this._sampledTexture]);
         this.stepSize = Math.ceil(width / 2);
 
+        const points = [
+            new Vec3(0.59983, -0.04224, 1),
+            new Vec3(0.6275, -0.01071, 2),
+            new Vec3(0.81403, 0.20028, 1),
+            new Vec3(0.57217, -0.07376, 3),
+            new Vec3(0.57217, -0.04224, 1),
+            new Vec3(0.6239, 0.01672, 2),
+            new Vec3(0.78637, 0.20049, 1),
+            new Vec3(0.59983, -0.07376, 1),
+            new Vec3(0.66024, -0.07376, 1),
+            new Vec3(0.66024, -0.03944, 2),
+            new Vec3(0.84655, 0.17131, 1),
+            new Vec3(0.63257, -0.07096, 1),
+            new Vec3(0.57217, -0.74504, 3),
+            new Vec3(0.59983, -0.74504, 1),
+            new Vec3(0.57217, -0.77656, 1)
+        ]
+        // Reflect all points over the y-axis;
+        const originalLength = points.length;
+        for (let i = 0; i < originalLength; i++){
+            const reflectedPoint = points[i].clone();
+            reflectedPoint.x *= -1;
+            points.push(reflectedPoint);
+        }
+
         // Initially, seed JFA texture
         this.jfaInput.use();
-        this.jfaInput.render([
-            new Vec3(0.5, 0.5, 1),
-            new Vec3(0, 0, 2),
-        ]);
+        this.jfaInput.render(points);
 
         requestAnimationFrame(main.loop.bind(main));
     }
@@ -181,10 +208,9 @@ class JFAStepShader extends BaseQuadShader{
         
         out uvec4 outData;
         
-        int distanceSQ(uvec2 samplePosition){
-            int dX = int(gl_FragCoord.x) - int(samplePosition.x);
-            int dY = int(gl_FragCoord.y) - int(samplePosition.y);
-            return dX * dY;
+        int distanceSQ(ivec2 coord, uvec2 samplePosition){
+            ivec2 delta = coord - ivec2(samplePosition);
+            return delta.x*delta.x + delta.y*delta.y;
         }
         
         void main(){
@@ -203,7 +229,7 @@ class JFAStepShader extends BaseQuadShader{
             
             for (int i = 0; i < samples.length(); i++){
                 uvec4 s = samples[i];
-                center = s.z != 0u && (distanceSQ(s.xy) < distanceSQ(center.xy) || center.z == 0u) ? s : center;
+                center = s.z != 0u && (distanceSQ(coord, s.xy) < distanceSQ(coord, center.xy) || center.z == 0u) ? s : center;
             }
             outData = center;
         }
@@ -262,6 +288,12 @@ class JFAResolveShader extends BaseQuadShader{
         void main(){
             uvec4 jfaOutput = texelFetch(uJFATex, ivec2(gl_FragCoord.xy), 0);
             outColor = jfaOutput.z > 0u ? vec4(uColors[jfaOutput.z - 1u], 1.) : vec4(0., 0., 0., 1.);
+            
+            highp vec2 texSize = vec2(textureSize(uJFATex, 0));
+            outColor = vec4(vec2(jfaOutput.xy) / vec2(texSize), 0., 1.);
+//            ivec2 delta = ivec2(gl_FragCoord.xy) - ivec2(jfaOutput.xy);
+//            highp float textureDiagonal = inversesqrt(dot(vec2(texSize), vec2(texSize))) * 3.;
+//            outColor = vec4(vec3(sqrt(float(delta.x*delta.x + delta.y*delta.y)) * textureDiagonal), 1.);
         }
         
         `.replace('#define JFA_N_COLORS', `#define JFA_N_COLORS ${nColors}`);
