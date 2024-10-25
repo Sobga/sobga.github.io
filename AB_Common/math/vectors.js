@@ -12,14 +12,40 @@ class Vec2{
     get x(){
         return this.values[0];
     }
+    set x(value){
+        this.values[0] = value;
+    }
 
     get y(){
         return this.values[1];
+    }
+    set y(value){
+        this.values[1] = value;
+    }
+
+    clone(){
+        return new Vec2(this.x, this.y);
     }
 
     add(v){
         this.values[0] += v.values[0];
         this.values[1] += v.values[1];
+        return this;
+    }
+
+    subtract(v){
+        this.values[0] -= v.values[0];
+        this.values[1] -= v.values[1];
+        return this;
+    }
+
+    subtractNew(v){
+        return this.clone().subtract(v)
+    }
+
+    scale(f){
+        this.values[0] *= f;
+        this.values[1] *= f;
         return this;
     }
 
@@ -109,6 +135,7 @@ class Vec3{
         return this;
     }
 
+    /** @returns {Vec3} **/
     clone(){
         return new Vec3(this.values[0], this.values[1], this.values[2]);
     }
@@ -121,6 +148,7 @@ class Vec3{
         return this.values[0] * this.values[0] + this.values[1] * this.values[1] + this.values[2] * this.values[2];
     }
 
+    /** @returns {Vec3} **/
     add(v){
         this.values[0] += v.values[0];
         this.values[1] += v.values[1];
@@ -128,6 +156,7 @@ class Vec3{
         return this;
     }
 
+    /** @returns {Vec3} **/
     addNew(v){
         return new Vec3(
         this.values[0] + v.values[0],
@@ -182,6 +211,34 @@ class Vec3{
 
     crossNew(v){
         return Vec3.cross(new Vec3(), this, v);
+    }
+
+    min(v){
+        this.x = Math.min(this.x, v.x);
+        this.y = Math.min(this.y, v.y);
+        this.z = Math.min(this.z, v.z);
+        return this;
+    }
+
+    max(v){
+        this.x = Math.max(this.x, v.x);
+        this.y = Math.max(this.y, v.y);
+        this.z = Math.max(this.z, v.z);
+        return this;
+    }
+
+    ceil(){
+        this.values[0] = Math.ceil(this.values[0]);
+        this.values[1] = Math.ceil(this.values[1]);
+        this.values[2] = Math.ceil(this.values[2]);
+        return this;
+    }
+
+    round(){
+        this.values[0] = Math.round(this.values[0]);
+        this.values[1] = Math.round(this.values[1]);
+        this.values[2] = Math.round(this.values[2]);
+        return this;
     }
 
     /** @return Vec3 */
