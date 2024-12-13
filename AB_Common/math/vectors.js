@@ -22,6 +22,17 @@ class Vec2{
         this.values[1] += v.values[1];
         return this;
     }
+
+    normalize(){
+        const sqLength = this.values[0]*this.values[0] + this.values[1]*this.values[1];
+        if (sqLength < 0.000001){
+            return this; // Avoid division by zero
+        }
+        const invLength = 1/Math.sqrt(sqLength);
+        this.values[0] *= invLength;
+        this.values[1] *= invLength;
+        return this;
+    }
 }
 
 class Vec3{
