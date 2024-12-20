@@ -1,3 +1,4 @@
+"use strict";
 
 async function init(){
 	const canvas = document.querySelector('canvas');
@@ -15,17 +16,20 @@ async function init(){
 	const floatByteSize = 4;
 	const pointVertexSize = floatByteSize*floatsPrPoint;
 	const points = [];
-	for (let i = 0; i < 1000; i++) {
-		const angle = 2*Math.PI * (i / 1000);
-		points.push(Math.cos(angle));
-		points.push(Math.sin(angle));
-		// const progress = i / (1000 - 1);
-		// points.push(2 * progress - 1);
-		// points.push(2 * progress - 1);
-		const direction = new Vec2(
-			2 * Math.random() - 1,
-			2 * Math.random() - 1
-		).normalize();
+	const nPoints = 500000;
+	for (let i = 0; i < nPoints; i++) {
+		const angle = 2*Math.PI * (i / nPoints);
+		const position= new Vec2(Math.cos(angle), Math.sin(angle));
+
+
+		// const direction = new Vec2(
+		// 	2 * Math.random() - 1,
+		// 	2 * Math.random() - 1
+		// ).normalize();
+		// CONST PZ
+		const direction = new Vec2(-position.y, -position.x).normalize();
+		points.push(position.x);
+		points.push(position.y);
 		points.push(direction.x);
 		points.push(direction.y);
 	}
@@ -103,10 +107,26 @@ async function init(){
 		label: 'Position update module',
 		code: `
 		@group(0) @binding(0) var<storage, read_write> particles : array<vec4f>;
-		@compute @workgroup_size(1)
+		@compute @workgroup_size(64)
 		fn main(@builtin(global_invocation_id) id: vec3u){
 			let i = id.x;
-			particles[i] = vec4f(particles[i].xy + 0.01*particles[i].zw, particles[i].zw);			
+			
+			var direction: vec2f = particles[i].zw;
+			if (abs(particles[i].x) >= 1. || abs(particles[i].y) >= 1.){
+				var normal: vec2f = vec2f(0., 0.);
+				if (particles[i].x < -1){
+					normal.x = 1.;
+				} else if (particles[i].x > 1.){
+					normal.x = -1.;
+				}
+				if (particles[i].y < -1.){
+					normal.y = 1.;
+				} else if (particles[i].y > 1.) {
+					normal.y = -1.;
+				}
+				direction = normalize(reflect(direction, normal));
+			}
+			particles[i] = vec4f(particles[i].xy + 0.01*direction, direction);			
 		}
 	`});
 
@@ -134,13 +154,12 @@ async function init(){
 		});
 		computePass.setPipeline(computePipeline);
 		computePass.setBindGroup(0, bindGroup);
-		computePass.dispatchWorkgroups(1000);
+		computePass.dispatchWorkgroups(Math.ceil((pointPositions.length / floatsPrPoint) / 64));
 		computePass.end();
 
 		// Get the current texture from the canvas context and
 		// set it as the texture to render to.
 		renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
-		// const renderEncoder = device.createCommandEncoder({label: 'Point-command encoder'});
 		const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor);
 		renderPass.setPipeline(renderPipeline);
 		renderPass.setVertexBuffer(0, vertexBuffer);
@@ -153,4 +172,9 @@ async function init(){
 	requestAnimationFrame(render);
 }
 
-window.onload = init;
+// window.onload = init;
+window.addEventListener('keyup', event => {
+	if (event.code === 'Space'){
+		init();
+	}
+});

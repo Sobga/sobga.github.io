@@ -33,6 +33,11 @@ class Vec2{
         this.values[1] *= invLength;
         return this;
     }
+
+    normalizeNew(){
+        const result = new Vec2(this.values[0], this.values[1]);
+        return result.normalize();
+    }
 }
 
 class Vec3{
