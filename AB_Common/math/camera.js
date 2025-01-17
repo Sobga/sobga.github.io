@@ -11,6 +11,7 @@ class Camera {
     setPerspective(fovy, aspect, near, far){
         this._projectionMatrix.setPerspective(fovy, aspect, near, far);
         Matrix4.multiply(this._viewProjection, this._projectionMatrix, this._viewMatrix);
+        return this;
     }
 
     /** @param position {Vec3}
@@ -32,5 +33,6 @@ class Camera {
             this._viewMatrix.lookAt(this._position, this._position.addNew(this._direction), Vec3.up()).inverse();
             Matrix4.multiply(this._viewProjection, this._projectionMatrix, this._viewMatrix);
         }
+        return this;
     }
 }

@@ -128,6 +128,11 @@ class Vec3{
         return this;
     }
 
+    normalizeNew(){
+        const invLength = 1/this.length();
+        return new Vec3(this.x * invLength, this.y * invLength, this.z  * invLength);
+    }
+
     copy(v){
         this.values[0] = v.values[0];
         this.values[1] = v.values[1];
