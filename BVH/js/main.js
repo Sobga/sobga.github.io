@@ -13,7 +13,7 @@ async function init(){
 
     // Create bbox-tree
     const boxes = toBoundedTriangles(model);
-    const groupedBoxes = groupBoxes(boxes);
+    const groupedBoxes = groupBoxes(model);
     const corners = new Float32Array(3*2*boxes.length);
     for (let i = 0; i < boxes.length; i++){
         corners.set(boxes[i].min.values, 6*i);
@@ -120,6 +120,7 @@ async function init(){
         fn main_vs(vert: Vertex) -> VertexOutput{
             var vsOut: VertexOutput;
             vsOut.color = vec4f(vert.cubePosition, 1.);
+//            vsOut.color = vec4f(0.3, 0.6, 0.3, 1.);
 //            vsOut.color = vec4f(select(vec3(1., 0., 0.), vec3(0., 1., 0.), face), 1.);
             vsOut.position = camera.viewProjection * vec4(
                 select(vert.minCorner.x, vert.maxCorner.x, (vert.vIdx & 1) > 0),
@@ -203,7 +204,7 @@ async function init(){
     let depthTexture;
 
     function render(){
-        const position = new Vec3(3 * Math.cos(angle), -1, 3*Math.sin(angle));
+        const position = new Vec3(3 * Math.cos(angle), 0.1, 3*Math.sin(angle));
         camera.setPosition(position, position.normalizeNew().scale(-1));
         angle += 0.01;
         device.queue.writeBuffer(cameraBuffer, 0, camera._viewProjection.values);
@@ -301,7 +302,18 @@ function toBoundedTriangles(model){
     return boundingBoxes;
 }
 
-/** @param {BoundingBox3D[]} boxes */
-function groupBoxes(boxes){
+/** @param {SimpleModel} model
+ * @return {BoundingVolumeHierarchy} */
+function groupBoxes(model){
+    const boundingBoxes = [];
+    const triangles = [];
+    for (let i = 0; i < model.indices.length/3; i++){
+        const p = model.vertices[model.indices[3*i]];
+        const q = model.vertices[model.indices[3*i + 1]];
+        const r = model.vertices[model.indices[3*i + 2]];
 
+        triangles.push({v0: p, v1: q, v2: r});
+        boundingBoxes.push(BoundingBox3D.fromPositions([p, q, r]));
+    }
+    return new BoundingVolumeHierarchy(triangles, boundingBoxes);
 }

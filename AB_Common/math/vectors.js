@@ -109,6 +109,12 @@ class Vec3{
         this.values[2] = value;
     }
 
+    setValues(x, y, z){
+        this.values[0] = x;
+        this.values[1] = y;
+        this.values[2] = z;
+    }
+
     equals(other){
         return this.values[0] === other.values[0]
             && this.values[1] === other.values[1]
