@@ -35,4 +35,17 @@ class Camera {
         }
         return this;
     }
+
+    // Gribb/Hartmann, https://www8.cs.umu.se/kurser/5DV051/HT12/lab/plane_extraction.pdf
+    getWorldFrustum(){
+        const planeInfo = [new Vec4(), new Vec4(), new Vec4(), new Vec4(), new Vec4(), new Vec4()]
+        for (let i = 0; i < 4; i++){planeInfo[0].values[i] = this._viewProjection.getValue(i, 3) + this._viewProjection.getValue(i, 0)}
+        for (let i = 0; i < 4; i++){planeInfo[1].values[i] = this._viewProjection.getValue(i, 3) - this._viewProjection.getValue(i, 0)}
+        for (let i = 0; i < 4; i++){planeInfo[2].values[i] = this._viewProjection.getValue(i, 3) + this._viewProjection.getValue(i, 1)}
+        for (let i = 0; i < 4; i++){planeInfo[3].values[i] = this._viewProjection.getValue(i, 3) - this._viewProjection.getValue(i, 1)}
+        for (let i = 0; i < 4; i++){planeInfo[4].values[i] = this._viewProjection.getValue(i, 3) + this._viewProjection.getValue(i, 2)}
+        for (let i = 0; i < 4; i++){planeInfo[5].values[i] = this._viewProjection.getValue(i, 3) - this._viewProjection.getValue(i, 2)}
+
+        return planeInfo;
+    }
 }

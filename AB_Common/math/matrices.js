@@ -3,6 +3,10 @@ class Matrix4 {
         this.values = new Float32Array(16);
     }
 
+    getValue(row, column){
+        return this.values[row + (column << 2)];
+    }
+
     setValue(row, column, value){
         this.values[row + (column << 2)] = value;
     }
@@ -35,8 +39,7 @@ class Matrix4 {
     }
 
     setPerspective(fovy, aspect, near, far){
-        let f = 1.0 / Math.tan(radians(fovy) / 2),
-            nf;
+        let f = 1.0 / Math.tan(radians(fovy) / 2);
 
         this.values[0] = f / aspect;
         this.values[1] = 0;
@@ -54,7 +57,7 @@ class Matrix4 {
         this.values[15] = 0;
 
         if (far != null && far !== Infinity) {
-            nf = 1 / (near - far);
+            const nf = 1 / (near - far);
             this.values[10] = (far + near) * nf;
             this.values[14] = 2 * far * near * nf;
 
