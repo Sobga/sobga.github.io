@@ -243,24 +243,6 @@ async function init(){
     requestAnimationFrame(render);
 }
 
-class SimpleModel{
-    /**
-     * @param {Vec3[]} vertices
-     * @param {number[]} indices */
-    constructor(vertices, indices) {
-        this.vertices = vertices;
-        this.indices = indices;
-        this.boundingBox = BoundingBox3D.fromPositions(vertices);
-    }
-
-    /** @param {(Vec3) => Vec3} transform */
-    transformVertices(transform){
-        this.vertices = this.vertices.map(vertex => transform(vertex));
-        this.boundingBox = BoundingBox3D.fromPositions(this.vertices);
-    }
-}
-
-
 /** @param {SimpleModel} model
  * @return {BoundingBox3D[]} */
 function toBoundedTriangles(model){

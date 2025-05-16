@@ -4,7 +4,7 @@
 class ComputePipeline{
 	constructor(device, bindGroupLayout) {
 		this._device = device;
-		this._shaderModule = device.createShaderModule(this.getShaderModuleDescriptor());
+		this._shaderModule = device.createShaderModule(this.getComputeModuleDescriptor());
 		this._layout = device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 		this._pipeline = device.createComputePipeline({
 			label: this.getComputePipelineName(),
@@ -15,7 +15,7 @@ class ComputePipeline{
 		});
 	}
 
-	/** @return {GPURenderPipeline}  */
+	/** @return {GPUComputePipeline}  */
 	get pipeline() {
 		return this._pipeline;
 	}
@@ -24,7 +24,7 @@ class ComputePipeline{
 	 * @abstract
 	 * @return GPUShaderModuleDescriptor
 	 * */
-	getShaderModuleDescriptor() {throw new Error('Not implemented');}
+	getComputeModuleDescriptor() {throw new Error('Not implemented');}
 
 	/**
 	 * @abstract

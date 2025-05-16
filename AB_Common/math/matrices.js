@@ -90,42 +90,6 @@ class Matrix4 {
      * @returns {Matrix4} out
      */
     lookAt(eye, target, up){
-        // const v = target.subtractNew(eye).normalize();  // view direction vector
-        // const n =  v.crossNew(up).normalize(); //normalize( cross(v, up) );       // perpendicular vector
-        // const u = n.crossNew(v).normalize()//normalize( cross(n, v) );        // "new" up vector
-        //
-        // v.negate();
-        //
-        // // First row
-        // this.values[0] = n.values[0];
-        // this.values[1] = n.values[1];
-        // this.values[2] = n.values[2];
-        // this.values[3] = 0; // -n.dot(eye)
-        // // Second row
-        // this.values[4] = u.values[0];
-        // this.values[5] = u.values[1];
-        // this.values[6] = u.values[2];
-        // this.values[7] = 0;
-        // // Third roww
-        // this.values[8] = v.values[0];
-        // this.values[9] = v.values[1];
-        // this.values[10] = v.values[2];
-        // this.values[11] = 0;
-        // // Final row
-        // this.values[12] = -n.dot(eye);
-        // this.values[13] = -u.dot(eye);
-        // this.values[14] = -v.dot(eye);
-        // this.values[15] = 1;
-        //
-        // /*var result = mat4(
-        //     vec4( n, -dot(n, eye) ),
-        //     vec4( u, -dot(u, eye) ),
-        //     vec4( v, -dot(v, eye) ),
-        //     vec4()
-        // ); */
-        //
-        // return this;
-
         let eyex = eye.values[0],
             eyey = eye.values[1],
             eyez = eye.values[2],
@@ -177,6 +141,28 @@ class Matrix4 {
         this.values[13] = eyey;
         this.values[14] = eyez;
         this.values[15] = 1;
+        return this;
+    }
+
+    transpose(){
+        let a01 = this.values[1],
+            a02 = this.values[2],
+            a03 = this.values[3];
+        let a12 = this.values[6],
+            a13 = this.values[7];
+        let a23 = this.values[11];
+        this.values[1] = this.values[4];
+        this.values[2] = this.values[8];
+        this.values[3] = this.values[12];
+        this.values[4] = a01;
+        this.values[6] = this.values[9];
+        this.values[7] = this.values[13];
+        this.values[8] = a02;
+        this.values[9] = a12;
+        this.values[11] = this.values[14];
+        this.values[12] = a03;
+        this.values[13] = a13;
+        this.values[14] = a23;
         return this;
     }
 
